@@ -1,0 +1,18 @@
+{
+  "name": "wombat9000-marketplace",
+  "owner": {
+    "name": "Bastian",
+    "email": "contact@example.com"
+  },
+  "metadata": {
+    "description": "A marketplace for Claude Code agent configuration plugins",
+    "version": "1.0.0",
+    "pluginRoot": "/plugins"
+  },
+  "plugins": [
+    {
+      "name": "example-plugin",
+      "source": "./plugins/example-plugin"
+    }
+  ]
+}
