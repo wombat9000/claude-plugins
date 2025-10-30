@@ -7,10 +7,10 @@
 setup() {
     # Get the directory containing the test file
     DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
-    # Path to hooks directory
-    HOOKS_DIR="$DIR/../hooks"
+    # Path to scripts directory
+    HOOKS_DIR="$DIR/../scripts"
 
-    # Ensure hooks are executable
+    # Ensure scripts are executable
     chmod +x "$HOOKS_DIR/bash-validate.sh"
     chmod +x "$HOOKS_DIR/read-validate.sh"
 }

@@ -3,7 +3,7 @@
   "description": "Prevents Claude from accessing dependency directories to save tokens",
   "version": "1.0.0",
   "hooks": {
-    "bashValidate": "${CLAUDE_PLUGIN_ROOT}/hooks/bash-validate.sh",
-    "readValidate": "${CLAUDE_PLUGIN_ROOT}/hooks/read-validate.sh"
+    "bashValidate": "${CLAUDE_PLUGIN_ROOT}/scripts/bash-validate.sh",
+    "readValidate": "${CLAUDE_PLUGIN_ROOT}/scripts/read-validate.sh"
   }
 }

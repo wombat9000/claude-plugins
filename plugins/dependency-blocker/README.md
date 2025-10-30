@@ -45,9 +45,9 @@ By default, the following directories are blocked (critical bloat offenders that
 
 ## Customization
 
-To add more directories to the exclusion list, edit the `EXCLUDED_DIRS` array in both hook scripts:
+To add more directories to the exclusion list, edit the `EXCLUDED_DIRS` array in both scripts:
 
-**bash-validate.sh** and **read-validate.sh**:
+**scripts/bash-validate.sh** and **scripts/read-validate.sh**:
 ```bash
 EXCLUDED_DIRS=(
     "node_modules"

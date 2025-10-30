@@ -12,14 +12,14 @@ help:
 # Run tests
 test:
 	@echo "Running tests..."
-	@chmod +x hooks/*.sh
+	@chmod +x scripts/*.sh
 	@bats tests/test-hooks.bats
 
 # Run shellcheck on hook scripts (if available)
 lint:
 	@if command -v shellcheck > /dev/null 2>&1; then \
 		echo "Running shellcheck on hook scripts..."; \
-		shellcheck hooks/*.sh; \
+		shellcheck scripts/*.sh; \
 		echo "✓ Lint complete"; \
 	else \
 		echo "shellcheck not installed. Install with: brew install shellcheck"; \
