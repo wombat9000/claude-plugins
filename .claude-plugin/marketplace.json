@@ -13,6 +13,19 @@
     {
       "name": "example-plugin",
       "source": "./plugins/example-plugin"
+    },
+    {
+      "name": "dependency-blocker",
+      "source": "./plugins/dependency-blocker",
+      "description": "Prevents Claude from accessing dependency directories to save tokens",
+      "version": "1.0.0",
+      "author": {
+        "name": "Bastian",
+        "email": "contact@example.com"
+      },
+      "keywords": ["efficiency", "tokens", "performance", "dependencies"],
+      "category": "utilities",
+      "license": "MIT"
     }
   ]
 }
