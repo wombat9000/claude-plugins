@@ -55,6 +55,30 @@ setup() {
     [[ "$output" =~ "Blocked" ]]
 }
 
+@test "bash-validate: blocks ls vendor" {
+    run "$HOOKS_DIR/bash-validate.sh" "ls vendor"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "bash-validate: blocks find in target" {
+    run "$HOOKS_DIR/bash-validate.sh" "find target -type f"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "bash-validate: blocks cat from .venv" {
+    run "$HOOKS_DIR/bash-validate.sh" "cat .venv/bin/activate"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "bash-validate: blocks grep in venv" {
+    run "$HOOKS_DIR/bash-validate.sh" "grep -r 'import' venv/"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
 # ============================================
 # bash-validate.sh - Should Allow
 # ============================================
@@ -129,6 +153,30 @@ setup() {
     [[ "$output" =~ "Blocked" ]]
 }
 
+@test "read-validate: blocks read from vendor" {
+    run "$HOOKS_DIR/read-validate.sh" "vendor/autoload.php"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "read-validate: blocks read from target" {
+    run "$HOOKS_DIR/read-validate.sh" "target/release/binary"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "read-validate: blocks read from .venv" {
+    run "$HOOKS_DIR/read-validate.sh" ".venv/lib/python3.11/site-packages/module.py"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "read-validate: blocks read from venv" {
+    run "$HOOKS_DIR/read-validate.sh" "venv/bin/activate"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
 # ============================================
 # read-validate.sh - Should Allow
 # ============================================
@@ -196,4 +244,25 @@ setup() {
 @test "edge case: blocks exact dist directory" {
     run "$HOOKS_DIR/bash-validate.sh" "ls dist"
     [ "$status" -eq 1 ]
+}
+
+@test "edge case: allows targeted.rs (not target/)" {
+    run "$HOOKS_DIR/read-validate.sh" "src/targeted.rs"
+    [ "$status" -eq 0 ]
+}
+
+@test "edge case: allows vendor.js (not vendor/)" {
+    run "$HOOKS_DIR/read-validate.sh" "src/vendor.js"
+    [ "$status" -eq 0 ]
+}
+
+@test "edge case: allows environment.py (not venv/)" {
+    run "$HOOKS_DIR/read-validate.sh" "src/environment.py"
+    [ "$status" -eq 0 ]
+}
+
+@test "edge case: blocks nested vendor path" {
+    run "$HOOKS_DIR/bash-validate.sh" "cat project/vendor/package.json"
+    [ "$status" -eq 1 ]
+    [[ "$output" =~ "Blocked" ]]
 }

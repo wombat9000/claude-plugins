@@ -3,8 +3,18 @@
 # This script validates bash commands before execution.
 # It blocks commands that would recurse into excluded directories to avoid token bloat.
 
-# List of excluded directories
-EXCLUDED_DIRS=("node_modules" ".git" "dist" "build")
+# List of excluded directories (critical bloat offenders)
+# Each of these can cause massive token waste if accessed
+EXCLUDED_DIRS=(
+    "node_modules"  # JS/Node dependencies - can be 100k+ files
+    ".git"          # Git version control history - entire repo history
+    "vendor"        # PHP/Go/Ruby dependencies - like node_modules for other languages
+    "target"        # Rust/Java build output - compiled artifacts
+    ".venv"         # Python virtual environment - entire stdlib + packages
+    "venv"          # Python virtual environment (alternate name)
+    "dist"          # Build output - minified/compiled/bundled files
+    "build"         # Build output - compiled artifacts and assets
+)
 
 # The bash command to validate is passed as arguments
 CMD="$*"

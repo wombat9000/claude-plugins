@@ -23,23 +23,47 @@ The Dependency Blocker plugin automatically blocks Claude Code from reading or e
 
 ## Blocked Directories
 
-By default, the following directories are blocked:
+By default, the following directories are blocked (critical bloat offenders that cause massive token waste):
 
-- `node_modules` - Node.js dependencies
-- `.git` - Git version control
-- `dist` - Distribution/build output
-- `build` - Build output
+### JavaScript/Node.js
+- `node_modules` - Can contain 100k+ dependency files
+
+### Version Control
+- `.git` - Entire repository history
+
+### Multi-Language Dependencies
+- `vendor` - PHP/Go/Ruby dependencies (like node_modules)
+
+### Build Outputs
+- `target` - Rust/Java compiled artifacts
+- `dist` - Minified/compiled/bundled output
+- `build` - Compiled artifacts and assets
+
+### Python
+- `.venv` - Python virtual environment (entire stdlib + packages)
+- `venv` - Python virtual environment (alternate name)
 
 ## Customization
 
-To customize the blocked directories, edit the `EXCLUDED` variable in both hook scripts:
+To add more directories to the exclusion list, edit the `EXCLUDED_DIRS` array in both hook scripts:
 
 **bash-validate.sh** and **read-validate.sh**:
 ```bash
-EXCLUDED="node_modules|\.git|dist|build|vendor|target"
+EXCLUDED_DIRS=(
+    "node_modules"
+    ".git"
+    "vendor"
+    "target"
+    ".venv"
+    "venv"
+    "dist"
+    "build"
+    # Add your own directories here:
+    # "__pycache__"
+    # ".pytest_cache"
+    # "coverage"
+)
 ```
-
-You can add any regex pattern separated by pipes (`|`).
 
 ## How It Works
 
@@ -104,10 +128,10 @@ bats tests/test-hooks.bats
 
 ### Test Coverage
 
-The test suite includes 48 tests covering:
-- Bash command validation (blocking and allowing scenarios)
-- File read validation (blocking and allowing scenarios)
-- Edge cases (similar names, partial matches, etc.)
+The test suite includes 42 tests covering:
+- Bash command validation for all 8 excluded directories
+- File read validation for all 8 excluded directories
+- Edge cases to prevent false positives (similar names, partial matches, etc.)
 
 See [tests/README.md](tests/README.md) for detailed testing documentation.
 
