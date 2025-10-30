@@ -10,6 +10,8 @@ The Dependency Blocker plugin automatically blocks Claude Code from reading or e
 
 - **Bash Command Validation**: Blocks bash commands that reference excluded directories
 - **Read Validation**: Prevents file reads from excluded directories
+- **Glob Validation**: Blocks glob patterns that target excluded directories
+- **Grep Validation**: Blocks grep searches in excluded directories
 - **Configurable**: Easy to customize excluded directory patterns
 - **Token Efficient**: Saves significant tokens by preventing unnecessary directory access
 
@@ -45,9 +47,9 @@ By default, the following directories are blocked (critical bloat offenders that
 
 ## Customization
 
-To add more directories to the exclusion list, edit the `EXCLUDED_DIRS` array in both scripts:
+To add more directories to the exclusion list, edit the `EXCLUDED_DIRS` array in all validation scripts:
 
-**scripts/bash-validate.sh** and **scripts/read-validate.sh**:
+**scripts/bash-validate.sh**, **scripts/read-validate.sh**, **scripts/glob-validate.sh**, and **scripts/grep-validate.sh**:
 ```bash
 EXCLUDED_DIRS=(
     "node_modules"
@@ -67,27 +69,45 @@ EXCLUDED_DIRS=(
 
 ## How It Works
 
-The plugin uses two validation hooks:
+The plugin uses four validation hooks that run before tool execution:
 
-1. **bashValidate**: Runs before any bash command execution
-2. **readValidate**: Runs before any file read operation
+1. **Bash**: Validates bash command executions
+2. **Read**: Validates file read operations
+3. **Glob**: Validates file pattern matching operations
+4. **Grep**: Validates content search operations
 
 When Claude attempts to access a blocked directory, the hook will:
-1. Check if the path/command contains any excluded directory pattern
-2. Block the operation and display an informative message
-3. Return exit code 1 to prevent execution
+1. Check if the path/command/pattern contains any excluded directory
+2. Block the operation and display an informative message to Claude
+3. Return exit code 2 to prevent execution
 
 ## Example Usage
 
-When Claude tries to run:
+### Blocked Operations
+
+**Bash command:**
 ```bash
 find node_modules -name "*.js"
 ```
+Blocked with: `Blocked: Command contains excluded directory 'node_modules'.`
 
-The plugin blocks it with:
+**Glob pattern:**
+```bash
+node_modules/**/*.js
 ```
-Blocked: Command contains excluded directories (node_modules|\.git|dist|build).
+Blocked with: `Blocked: Glob pattern 'node_modules/**/*.js' targets excluded directory 'node_modules'.`
+
+**Grep search:**
+```bash
+grep -r "import" node_modules/
 ```
+Blocked with: `Blocked: Grep path 'node_modules/' is in excluded directory 'node_modules'.`
+
+**Read operation:**
+```bash
+cat node_modules/react/package.json
+```
+Blocked with: `Blocked: File path contains excluded directory 'node_modules'.`
 
 ## Benefits
 
@@ -128,12 +148,15 @@ bats tests/test-hooks.bats
 
 ### Test Coverage
 
-The test suite includes 46 tests covering:
-- **Command-line mode tests (42 tests)**: Direct script invocation with arguments
-- **JSON input mode tests (4 tests)**: Claude Code hook format via stdin
-- Bash command validation for all 8 excluded directories
-- File read validation for all 8 excluded directories
-- Edge cases to prevent false positives (similar names, partial matches, etc.)
+The test suite includes 80 tests covering:
+- **Bash validation (16 tests)**: Command-line and JSON input modes
+- **Read validation (16 tests)**: File path validation
+- **Glob validation (14 tests)**: Pattern matching validation
+- **Grep validation (20 tests)**: Search path validation
+- **JSON input tests (4 tests)**: Claude Code hook format via stdin
+- **Edge cases (10 tests)**: Prevent false positives (similar names, partial matches, etc.)
+
+All validation scripts cover all 8 excluded directories.
 
 See [tests/README.md](tests/README.md) for detailed testing documentation.
 

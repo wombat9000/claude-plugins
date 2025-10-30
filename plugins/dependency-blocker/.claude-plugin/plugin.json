@@ -21,6 +21,24 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/read-validate.sh"
           }
         ]
+      },
+      {
+        "matcher": "Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/glob-validate.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/grep-validate.sh"
+          }
+        ]
       }
     ]
   }
