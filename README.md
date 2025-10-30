@@ -42,6 +42,24 @@ Provides slash commands to initialize new commands and review existing ones. Sup
 - Interactive prompts to guide command creation
 - Support for project, personal, and plugin-level commands
 
+### block-dotfiles
+
+Blocks Claude Code access to sensitive dotfiles and configuration files that may contain credentials, API keys, and other secrets.
+
+Protects 20+ sensitive files including `.env`, `.bashrc`, `.zshrc`, `.ssh/`, `.aws/`, `.npmrc`, and other credential files through Bash, Read, Glob, and Grep validation hooks.
+
+**Category**: security
+**Version**: 1.0.0
+**License**: MIT
+
+**Features:**
+- Blocks access to shell configuration files (.bashrc, .zshrc, etc.)
+- Blocks access to environment variable files (.env, .env.local, etc.)
+- Blocks access to credential directories (.ssh, .aws, .docker, .kube, etc.)
+- Blocks access to credential files (.npmrc, .pypirc, .gitconfig, .netrc)
+- Comprehensive test suite with 104 tests
+- Security-focused with clear blocking messages
+
 ### dependency-blocker
 
 Prevents Claude from accessing dependency directories to save tokens and improve performance.
