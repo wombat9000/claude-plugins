@@ -11,13 +11,13 @@ This repository provides a plugin marketplace for Claude Code extensions. Users 
 ### 1. Add the marketplace to Claude Code
 
 ```shell
-/plugin marketplace add autostein/agent-configs
+/plugin marketplace add wombat9000/claude-plugins
 ```
 
 Or if using a git URL:
 
 ```shell
-/plugin marketplace add https://github.com/autostein/agent-configs.git
+/plugin marketplace add https://github.com/wombat9000/claude-plugins.git
 ```
 
 ### 2. Browse available plugins
@@ -29,18 +29,27 @@ Or if using a git URL:
 ### 3. Install plugins from this marketplace
 
 ```shell
-/plugin install plugin-name@agent-configs-marketplace
+/plugin install plugin-name@wombat9000-marketplace
 ```
 
 ## Available Plugins
 
-### example-plugin
+### dependency-blocker
 
-An example plugin demonstrating marketplace functionality.
+Prevents Claude from accessing dependency directories to save tokens and improve performance.
+
+Blocks access to `node_modules`, `.git`, `dist`, `build`, `vendor`, `target`, `.venv`, and `venv` directories through Bash, Read, Glob, and Grep validation hooks.
 
 **Category**: utilities
 **Version**: 1.0.0
 **License**: MIT
+
+**Features:**
+- Blocks Bash commands targeting excluded directories
+- Blocks Read operations from excluded directories
+- Blocks Glob patterns targeting excluded directories
+- Blocks Grep searches in excluded directories
+- Comprehensive test suite with 80 tests
 
 ## For Plugin Developers
 
@@ -88,7 +97,7 @@ Add your plugin entry to `.claude-plugin/marketplace.json`:
 /plugin marketplace add ./path/to/this/repo
 
 # Install and test your plugin
-/plugin install your-plugin-name@agent-configs-marketplace
+/plugin install your-plugin-name@wombat9000-marketplace
 ```
 
 #### 4. Submit your plugin
@@ -114,10 +123,10 @@ The marketplace is configured in `.claude-plugin/marketplace.json`:
 
 ```json
 {
-  "name": "agent-configs-marketplace",
+  "name": "wombat9000-marketplace",
   "owner": {
-    "name": "Autostein",
-    "email": "contact@autostein.com"
+    "name": "Bastian",
+    "email": "contact@example.com"
   },
   "metadata": {
     "description": "A marketplace for Claude Code agent configuration plugins",
@@ -137,10 +146,10 @@ For automatic marketplace installation in team projects, add to `.claude/setting
 ```json
 {
   "extraKnownMarketplaces": {
-    "agent-configs": {
+    "wombat9000-marketplace": {
       "source": {
         "source": "github",
-        "repo": "autostein/agent-configs"
+        "repo": "wombat9000/claude-plugins"
       }
     }
   }
@@ -173,7 +182,7 @@ MIT
 
 For issues or questions:
 - Open an issue on GitHub
-- Contact: contact@autostein.com
+- Contact: contact@example.com
 
 ## Learn More
 

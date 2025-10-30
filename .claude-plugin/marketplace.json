@@ -11,10 +11,6 @@
   },
   "plugins": [
     {
-      "name": "example-plugin",
-      "source": "./plugins/example-plugin"
-    },
-    {
       "name": "dependency-blocker",
       "source": "./plugins/dependency-blocker",
       "description": "Prevents Claude from accessing dependency directories to save tokens"
