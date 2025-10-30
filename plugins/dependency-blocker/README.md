@@ -139,24 +139,24 @@ npm install -g bats
 
 ```bash
 # Run all tests
-bats plugins/dependency-blocker/tests/test-hooks.bats
+make test
 
-# Or from the plugin directory
-cd plugins/dependency-blocker
-bats tests/test-hooks.bats
+# Or run individual test suites
+bats tests/test-bash-validate.bats
+bats tests/test-read-validate.bats
+bats tests/test-glob-validate.bats
+bats tests/test-grep-validate.bats
 ```
 
 ### Test Coverage
 
-The test suite includes 80 tests covering:
-- **Bash validation (16 tests)**: Command-line and JSON input modes
-- **Read validation (16 tests)**: File path validation
-- **Glob validation (14 tests)**: Pattern matching validation
-- **Grep validation (20 tests)**: Search path validation
-- **JSON input tests (4 tests)**: Claude Code hook format via stdin
-- **Edge cases (10 tests)**: Prevent false positives (similar names, partial matches, etc.)
+The test suite includes 80 tests organized by validation script:
+- **test-bash-validate.bats (21 tests)**: Command-line args, JSON input, edge cases
+- **test-read-validate.bats (27 tests)**: File path validation with command-line and JSON modes
+- **test-glob-validate.bats (17 tests)**: Pattern and path parameter validation
+- **test-grep-validate.bats (15 tests)**: Search path validation
 
-All validation scripts cover all 8 excluded directories.
+All validation scripts test all 8 excluded directories with both blocking and allowing scenarios.
 
 See [tests/README.md](tests/README.md) for detailed testing documentation.
 
