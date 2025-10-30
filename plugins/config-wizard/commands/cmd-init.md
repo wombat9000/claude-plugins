@@ -1,6 +1,8 @@
-# Command Initialization
+---
+description: Initialize a new slash command for Claude Code.
+---
 
-Initialize a new slash command for Claude Code.
+# Command Initialization
 
 First, ask the user where they want to create the command using the AskUserQuestion tool with a single choice question:
 - Question: "Where should this command be created?"
