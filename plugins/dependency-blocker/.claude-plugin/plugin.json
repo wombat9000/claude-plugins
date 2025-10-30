@@ -3,7 +3,25 @@
   "description": "Prevents Claude from accessing dependency directories to save tokens",
   "version": "1.0.0",
   "hooks": {
-    "bashValidate": "${CLAUDE_PLUGIN_ROOT}/scripts/bash-validate.sh",
-    "readValidate": "${CLAUDE_PLUGIN_ROOT}/scripts/read-validate.sh"
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/bash-validate.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/read-validate.sh"
+          }
+        ]
+      }
+    ]
   }
 }
