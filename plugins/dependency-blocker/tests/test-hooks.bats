@@ -21,61 +21,61 @@ setup() {
 
 @test "bash-validate: blocks ls node_modules" {
     run "$HOOKS_DIR/bash-validate.sh" "ls node_modules"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "bash-validate: blocks find in node_modules" {
     run "$HOOKS_DIR/bash-validate.sh" "find node_modules -name '*.js'"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "bash-validate: blocks cat from .git" {
     run "$HOOKS_DIR/bash-validate.sh" "cat .git/config"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "bash-validate: blocks grep in dist" {
     run "$HOOKS_DIR/bash-validate.sh" "grep -r 'test' dist/"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "bash-validate: blocks cd to build" {
     run "$HOOKS_DIR/bash-validate.sh" "cd build && ls"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "bash-validate: blocks node_modules in nested path" {
     run "$HOOKS_DIR/bash-validate.sh" "cat src/node_modules/package.json"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "bash-validate: blocks ls vendor" {
     run "$HOOKS_DIR/bash-validate.sh" "ls vendor"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "bash-validate: blocks find in target" {
     run "$HOOKS_DIR/bash-validate.sh" "find target -type f"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "bash-validate: blocks cat from .venv" {
     run "$HOOKS_DIR/bash-validate.sh" "cat .venv/bin/activate"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "bash-validate: blocks grep in venv" {
     run "$HOOKS_DIR/bash-validate.sh" "grep -r 'import' venv/"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
@@ -119,61 +119,61 @@ setup() {
 
 @test "read-validate: blocks read from node_modules" {
     run "$HOOKS_DIR/read-validate.sh" "node_modules/package/index.js"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "read-validate: blocks read from .git" {
     run "$HOOKS_DIR/read-validate.sh" ".git/config"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "read-validate: blocks read from dist" {
     run "$HOOKS_DIR/read-validate.sh" "dist/bundle.js"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "read-validate: blocks read from build" {
     run "$HOOKS_DIR/read-validate.sh" "build/output.js"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "read-validate: blocks nested node_modules path" {
     run "$HOOKS_DIR/read-validate.sh" "/path/to/node_modules/pkg/file.js"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "read-validate: blocks .git in absolute path" {
     run "$HOOKS_DIR/read-validate.sh" "/home/user/project/.git/HEAD"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "read-validate: blocks read from vendor" {
     run "$HOOKS_DIR/read-validate.sh" "vendor/autoload.php"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "read-validate: blocks read from target" {
     run "$HOOKS_DIR/read-validate.sh" "target/release/binary"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "read-validate: blocks read from .venv" {
     run "$HOOKS_DIR/read-validate.sh" ".venv/lib/python3.11/site-packages/module.py"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "read-validate: blocks read from venv" {
     run "$HOOKS_DIR/read-validate.sh" "venv/bin/activate"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
@@ -232,7 +232,7 @@ setup() {
 
 @test "edge case: blocks .git directory object" {
     run "$HOOKS_DIR/read-validate.sh" ".git/objects/abc123"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
@@ -243,7 +243,7 @@ setup() {
 
 @test "edge case: blocks exact dist directory" {
     run "$HOOKS_DIR/bash-validate.sh" "ls dist"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
 }
 
 @test "edge case: allows targeted.rs (not target/)" {
@@ -263,6 +263,6 @@ setup() {
 
 @test "edge case: blocks nested vendor path" {
     run "$HOOKS_DIR/bash-validate.sh" "cat project/vendor/package.json"
-    [ "$status" -eq 1 ]
+    [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }

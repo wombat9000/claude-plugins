@@ -128,7 +128,9 @@ bats tests/test-hooks.bats
 
 ### Test Coverage
 
-The test suite includes 42 tests covering:
+The test suite includes 46 tests covering:
+- **Command-line mode tests (42 tests)**: Direct script invocation with arguments
+- **JSON input mode tests (4 tests)**: Claude Code hook format via stdin
 - Bash command validation for all 8 excluded directories
 - File read validation for all 8 excluded directories
 - Edge cases to prevent false positives (similar names, partial matches, etc.)

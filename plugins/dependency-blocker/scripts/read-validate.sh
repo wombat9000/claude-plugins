@@ -16,8 +16,16 @@ EXCLUDED_DIRS=(
     "build"         # Build output - compiled artifacts and assets
 )
 
-# The file path to validate is passed as the first argument
-FILE_PATH="$1"
+# Read input - either JSON from stdin or command-line arguments
+if [ $# -gt 0 ]; then
+    # Command-line arguments provided (testing mode)
+    FILE_PATH="$1"
+else
+    # No arguments, read JSON from stdin (Claude Code hook mode)
+    INPUT=$(cat)
+    # Extract file_path from JSON: {"tool_input": {"file_path": "..."}}
+    FILE_PATH=$(echo "$INPUT" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"file_path"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
+fi
 
 # Function to check if a directory name appears as a complete path component
 contains_excluded_dir() {
@@ -35,11 +43,16 @@ contains_excluded_dir() {
     return 1  # Not found
 }
 
+# Skip check if no file path was extracted
+if [ -z "$FILE_PATH" ]; then
+    exit 0
+fi
+
 # Check each excluded directory
 for dir in "${EXCLUDED_DIRS[@]}"; do
     if contains_excluded_dir "$FILE_PATH" "$dir"; then
-        echo "Blocked: File path contains excluded directory '$dir'."
-        exit 1
+        echo "Blocked: File path contains excluded directory '$dir'." >&2
+        exit 2
     fi
 done
 

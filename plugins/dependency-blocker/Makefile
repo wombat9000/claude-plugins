@@ -13,7 +13,7 @@ help:
 test:
 	@echo "Running tests..."
 	@chmod +x scripts/*.sh
-	@bats tests/test-hooks.bats
+	@bats tests/*.bats
 
 # Run shellcheck on hook scripts (if available)
 lint:
