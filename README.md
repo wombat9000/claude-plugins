@@ -28,6 +28,20 @@ This repository provides a plugin marketplace for Claude Code extensions. Users 
 
 ## Available Plugins
 
+### config-wizard
+
+Interactive wizard to help create and review Claude Code slash commands.
+
+Provides slash commands to initialize new commands and review existing ones. Supports creating commands at project, personal, or plugin level.
+
+**Version**: 1.0.0
+
+**Features:**
+- `/config-wizard:cmd-init` - Initialize a new slash command for Claude Code
+- `/config-wizard:cmd-review` - Review an existing slash command from the current project
+- Interactive prompts to guide command creation
+- Support for project, personal, and plugin-level commands
+
 ### dependency-blocker
 
 Prevents Claude from accessing dependency directories to save tokens and improve performance.
