@@ -1,0 +1,10 @@
+{
+  "name": "config-wizard",
+  "description": "Interactive wizard to help create new Claude Code plugins",
+  "version": "1.0.0",
+  "commands": {
+    "cmd-init": {
+      "description": "Initialize a new slash command"
+    }
+  }
+}
