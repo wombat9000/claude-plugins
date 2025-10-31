@@ -19,6 +19,11 @@
       "name": "config-wizard",
       "source": "./plugins/config-wizard",
       "description": "Collection of claude configs to help with configuring and extending claude code."
+    },
+    {
+      "name": "block-dotfiles",
+      "source": "./plugins/block-dotfiles",
+      "description": "Blocks access to sensitive dotfiles and configuration files that may contain credentials, API keys, and other secrets."
     }
   ]
 }
