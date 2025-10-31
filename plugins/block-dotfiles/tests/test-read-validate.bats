@@ -129,19 +129,19 @@ setup() {
 # ============================================
 
 @test "JSON: blocks read from .env" {
-    echo '{"tool_input": {"file_path": ".env"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"file_path\": \".env\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "JSON: blocks read from .bashrc" {
-    echo '{"tool_input": {"file_path": "/home/user/.bashrc"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"file_path\": \"/home/user/.bashrc\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "JSON: blocks read from .ssh directory" {
-    echo '{"tool_input": {"file_path": ".ssh/id_rsa"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"file_path\": \".ssh/id_rsa\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
@@ -151,12 +151,12 @@ setup() {
 # ============================================
 
 @test "JSON: allows read from regular file" {
-    echo '{"tool_input": {"file_path": "src/index.js"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"file_path\": \"src/index.js\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "JSON: allows read from package.json" {
-    echo '{"tool_input": {"file_path": "package.json"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"file_path\": \"package.json\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
@@ -170,11 +170,11 @@ setup() {
 }
 
 @test "handles JSON with missing file_path" {
-    echo '{"tool_input": {}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "handles malformed JSON gracefully" {
-    echo 'invalid json' | run "$SCRIPT"
+    run bash -c "echo 'invalid json' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }

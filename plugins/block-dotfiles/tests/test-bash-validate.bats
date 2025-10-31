@@ -111,19 +111,19 @@ setup() {
 # ============================================
 
 @test "JSON: blocks cat .env" {
-    echo '{"tool_input": {"command": "cat .env"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"command\": \"cat .env\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "JSON: blocks cat .bashrc" {
-    echo '{"tool_input": {"command": "cat /home/user/.bashrc"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"command\": \"cat /home/user/.bashrc\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "JSON: blocks ls .ssh" {
-    echo '{"tool_input": {"command": "ls .ssh/"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"command\": \"ls .ssh/\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
@@ -133,12 +133,12 @@ setup() {
 # ============================================
 
 @test "JSON: allows cat on regular file" {
-    echo '{"tool_input": {"command": "cat src/main.js"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"command\": \"cat src/main.js\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "JSON: allows ls command" {
-    echo '{"tool_input": {"command": "ls -la"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"command\": \"ls -la\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
@@ -152,11 +152,11 @@ setup() {
 }
 
 @test "handles JSON with missing command" {
-    echo '{"tool_input": {}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "handles malformed JSON gracefully" {
-    echo 'invalid json' | run "$SCRIPT"
+    run bash -c "echo 'invalid json' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }

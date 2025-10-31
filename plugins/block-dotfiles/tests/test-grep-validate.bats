@@ -94,19 +94,19 @@ setup() {
 # ============================================
 
 @test "JSON: blocks grep in .env" {
-    echo '{"tool_input": {"pattern": "API_KEY", "path": ".env"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"API_KEY\", \"path\": \".env\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "JSON: blocks grep in .bashrc" {
-    echo '{"tool_input": {"pattern": "export", "path": ".bashrc"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"export\", \"path\": \".bashrc\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "JSON: blocks grep in .ssh" {
-    echo '{"tool_input": {"pattern": "ssh", "path": ".ssh"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"ssh\", \"path\": \".ssh\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
@@ -116,17 +116,17 @@ setup() {
 # ============================================
 
 @test "JSON: allows grep in src directory" {
-    echo '{"tool_input": {"pattern": "function", "path": "src"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"function\", \"path\": \"src\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "JSON: allows grep without path (defaults to current dir)" {
-    echo '{"tool_input": {"pattern": "TODO"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"TODO\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "JSON: allows grep in safe directory" {
-    echo '{"tool_input": {"pattern": "import", "path": "lib"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"import\", \"path\": \"lib\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
@@ -140,16 +140,16 @@ setup() {
 }
 
 @test "handles JSON with missing path" {
-    echo '{"tool_input": {"pattern": "search"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"search\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "handles JSON with empty path" {
-    echo '{"tool_input": {"pattern": "search", "path": ""}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"search\", \"path\": \"\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "handles malformed JSON gracefully" {
-    echo 'invalid json' | run "$SCRIPT"
+    run bash -c "echo 'invalid json' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }

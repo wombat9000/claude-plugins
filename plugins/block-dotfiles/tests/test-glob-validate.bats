@@ -107,19 +107,19 @@ setup() {
 # ============================================
 
 @test "JSON: blocks pattern .env*" {
-    echo '{"tool_input": {"pattern": ".env*"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \".env*\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "JSON: blocks pattern **/.bashrc" {
-    echo '{"tool_input": {"pattern": "**/.bashrc"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"**/.bashrc\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
 
 @test "JSON: blocks path .ssh" {
-    echo '{"tool_input": {"pattern": "*", "path": ".ssh"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"*\", \"path\": \".ssh\"}}' | '$SCRIPT'"
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
@@ -129,12 +129,12 @@ setup() {
 # ============================================
 
 @test "JSON: allows safe pattern" {
-    echo '{"tool_input": {"pattern": "src/**/*.js"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"src/**/*.js\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "JSON: allows safe path" {
-    echo '{"tool_input": {"pattern": "*.md", "path": "docs"}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {\"pattern\": \"*.md\", \"path\": \"docs\"}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
@@ -148,11 +148,11 @@ setup() {
 }
 
 @test "handles JSON with missing pattern" {
-    echo '{"tool_input": {}}' | run "$SCRIPT"
+    run bash -c "echo '{\"tool_input\": {}}' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
 
 @test "handles malformed JSON gracefully" {
-    echo 'invalid json' | run "$SCRIPT"
+    run bash -c "echo 'invalid json' | '$SCRIPT'"
     [ "$status" -eq 0 ]
 }
