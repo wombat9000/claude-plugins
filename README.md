@@ -2,6 +2,12 @@
 
 A marketplace for Claude Code agent configuration plugins.
 
+## Available Plugins
+
+1. **[config-wizard](#config-wizard)** - Interactive wizard to help create and review Claude Code slash commands
+2. **[block-dotfiles](#block-dotfiles)** - Security plugin that blocks access to sensitive dotfiles and configuration files
+3. **[dependency-blocker](#dependency-blocker)** - Performance plugin that prevents access to dependency directories
+
 ## Overview
 
 This repository provides a plugin marketplace for Claude Code extensions. Users can discover, install, and manage plugins distributed through this marketplace.
