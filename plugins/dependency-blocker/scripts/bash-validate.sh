@@ -3,13 +3,13 @@
 # This script validates bash commands before execution.
 # It blocks direct access to excluded directories but allows:
 # - Tool invocations (npm, yarn, cargo, make, etc.)
-# - Tool orchestration with safe navigation (cd dir && npm run build)
+# - Tool orchestration with navigation (cd dir && npm run build)
 #
 # Philosophy:
-# - Tool invocations safely manage their own directories
-# - Safe navigation (cd, pwd, pushd, popd) is allowed
-# - Direct access (cat, grep, find, ls) on excluded dirs is blocked
-# - Any unsafe command in a chain is treated as direct access
+# - Tool invocations manage their own directories (trusted)
+# - Navigation commands (cd, pwd, pushd, popd) are allowed
+# - File access commands (cat, grep, find, ls) are checked for excluded dirs
+# - Any checked command accessing excluded dirs in a chain blocks the entire chain
 
 # ============================================
 # Configuration
@@ -28,7 +28,8 @@ declare -a EXCLUDED_DIRS=(
     "build"         # Build output - compiled artifacts and assets
 )
 
-# List of trusted tool invocations that can safely manage their own directories
+# List of trusted tool invocations that manage their own directories
+# These are always allowed, even when they operate on excluded directories
 declare -a TRUSTED_TOOLS=(
     "npm"           # Node Package Manager
     "yarn"          # Yarn package manager
@@ -44,17 +45,17 @@ declare -a TRUSTED_TOOLS=(
     "pip"           # Python package installer
 )
 
-# List of truly safe navigation commands
-# Note: cd is handled separately - it's allowed unless navigating to excluded dirs
+# List of always-allowed navigation commands
+# Note: cd is handled separately - it's allowed unless navigating TO excluded dirs
 declare -a SAFE_COMMANDS=(
     "pwd"           # Print working directory
     "pushd"         # Push directory
     "popd"          # Pop directory
 )
 
-# List of dangerous commands that can access files/directories
-# These are blocked when they reference excluded directories
-declare -a DANGEROUS_COMMANDS=(
+# List of checked commands that can access files/directories
+# These commands are checked for references to excluded directories
+declare -a CHECKED_COMMANDS=(
     "ls"            # List directory contents
     "cat"           # Concatenate and print files
     "grep"          # Search file contents
@@ -101,14 +102,14 @@ is_trusted_tool() {
     return 1
 }
 
-# Check if a command is in the dangerous commands list
+# Check if a command is in the checked commands list
 # Uses case-insensitive matching to handle macOS case-insensitive filesystem
-is_dangerous_command() {
+is_checked_command() {
     local cmd="$1"
     local cmd_lower
     cmd_lower=$(echo "$cmd" | tr '[:upper:]' '[:lower:]')
-    for dangerous in "${DANGEROUS_COMMANDS[@]}"; do
-        [[ "$cmd_lower" == "$dangerous" ]] && return 0
+    for checked in "${CHECKED_COMMANDS[@]}"; do
+        [[ "$cmd_lower" == "$checked" ]] && return 0
     done
     return 1
 }
@@ -249,7 +250,7 @@ validate_segment() {
         return $?
     fi
 
-    # Check if the command is safe or trusted
+    # Check if the command is always-allowed (navigation) or trusted (tools)
     if is_safe_command "$first_word" || is_trusted_tool "$first_word"; then
         return 0
     fi
@@ -261,14 +262,14 @@ validate_segment() {
         return $?
     fi
 
-    # Only check for excluded directories if this is a known dangerous command
-    # Unknown commands (like "CD", "Cat", etc.) will fail anyway, so we allow them
-    if is_dangerous_command "$first_word"; then
+    # Only check for excluded directories if this is a checked command
+    # Unchecked commands are allowed (they may fail with "command not found" anyway)
+    if is_checked_command "$first_word"; then
         check_segment_for_excluded_dirs "$segment"
         return $?
     fi
 
-    # Unknown command - allow it (will fail with "command not found" anyway)
+    # Unchecked command - allow it
     return 0
 }
 

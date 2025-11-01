@@ -126,7 +126,7 @@ setup() {
     done
 }
 
-@test "allows general safe commands" {
+@test "allows unchecked commands" {
     local -a commands=(
         "/usr/bin/git status"
         "echo 'hello world'"
