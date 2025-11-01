@@ -208,7 +208,7 @@ validate_cd_command() {
 
     # Check if the target is an excluded directory
     if is_excluded_directory "$target"; then
-        echo "Blocked: Command contains excluded directory '$target'." >&2
+        echo "Blocked: Cannot navigate to excluded directory '$target'. This would expose dependency/build files that cause token bloat. Use tool commands (npm, make, etc.) which manage these directories internally." >&2
         return 1
     fi
 
@@ -221,7 +221,7 @@ check_segment_for_excluded_dirs() {
 
     for dir in "${EXCLUDED_DIRS[@]}"; do
         if contains_excluded_dir_as_path_component "$segment" "$dir"; then
-            echo "Blocked: Command contains excluded directory '$dir'." >&2
+            echo "Blocked: Command segment '$segment' accesses excluded directory '$dir'. This directory contains dependency/build files that would waste tokens. Consider using tool-specific commands instead." >&2
             return 1
         fi
     done
@@ -279,13 +279,13 @@ check_dangerous_features() {
 
     # Check for command substitution: $(...) or `...`
     if [[ "$cmd" =~ \$\( ]] || [[ "$cmd" =~ \` ]]; then
-        echo "Blocked: Command contains command substitution which could bypass validation." >&2
+        echo "Blocked: Command substitution \$(...) or backticks are not allowed as they could bypass directory validation. Run commands separately instead of nesting them." >&2
         return 1
     fi
 
     # Check for process substitution: <(...) or >(...)
     if [[ "$cmd" =~ \<\( ]] || [[ "$cmd" =~ \>\( ]]; then
-        echo "Blocked: Command contains process substitution which could bypass validation." >&2
+        echo "Blocked: Process substitution <(...) or >(...) is not allowed as it could bypass directory validation. Use temporary files or separate commands instead." >&2
         return 1
     fi
 
@@ -293,14 +293,14 @@ check_dangerous_features() {
     for dir in "${EXCLUDED_DIRS[@]}"; do
         # Match patterns like {node_modules,dist} or {a,node_modules}
         if [[ "$cmd" =~ \{[^}]*${dir}[^}]*\} ]]; then
-            echo "Blocked: Command contains brace expansion with excluded directory '$dir'." >&2
+            echo "Blocked: Brace expansion {...} contains excluded directory '$dir'. This could expand to paths in dependency/build directories. Avoid using brace expansion with excluded directories." >&2
             return 1
         fi
 
         # Check for variable assignments to excluded directories
         # Pattern: VAR=excluded_dir or VAR="excluded_dir" or VAR='excluded_dir'
         if [[ "$cmd" =~ [A-Za-z_][A-Za-z0-9_]*=[\"\']*${dir}[\"\']*([[:space:]]|$|\&\&|\|\||;) ]]; then
-            echo "Blocked: Command sets variable to excluded directory '$dir'." >&2
+            echo "Blocked: Cannot assign variable to excluded directory '$dir'. Variable assignments to dependency/build directories could be used to bypass validation later in the command chain." >&2
             return 1
         fi
     done
