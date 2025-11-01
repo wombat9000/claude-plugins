@@ -53,7 +53,7 @@ fi
 # Check path for excluded directories
 for dir in "${EXCLUDED_DIRS[@]}"; do
     if contains_excluded_dir "$PATH_ARG" "$dir"; then
-        echo "Blocked: Grep path '$PATH_ARG' is in excluded directory '$dir'." >&2
+        echo "Blocked: Cannot grep in path '$PATH_ARG' - it's inside excluded directory '$dir'. Grepping dependency/build directories wastes tokens on minified/generated code. Use tool commands (npm search, go doc, etc.) or grep specific files outside these directories." >&2
         exit 2
     fi
 done

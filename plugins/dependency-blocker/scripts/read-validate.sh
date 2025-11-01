@@ -51,7 +51,7 @@ fi
 # Check each excluded directory
 for dir in "${EXCLUDED_DIRS[@]}"; do
     if contains_excluded_dir "$FILE_PATH" "$dir"; then
-        echo "Blocked: File path contains excluded directory '$dir'." >&2
+        echo "Blocked: Cannot read file '$FILE_PATH' - path contains excluded directory '$dir'. Reading files from dependency/build directories wastes tokens on minified/generated code. Use tool-specific commands to inspect these directories." >&2
         exit 2
     fi
 done

@@ -54,7 +54,7 @@ fi
 # Check pattern for excluded directories
 for dir in "${EXCLUDED_DIRS[@]}"; do
     if contains_excluded_dir "$PATTERN" "$dir"; then
-        echo "Blocked: Glob pattern '$PATTERN' targets excluded directory '$dir'." >&2
+        echo "Blocked: Glob pattern '$PATTERN' targets excluded directory '$dir'. Globbing dependency/build directories would return massive file lists causing token bloat. Use tool commands to inspect these directories." >&2
         exit 2
     fi
 done
@@ -63,7 +63,7 @@ done
 if [ -n "$PATH_ARG" ]; then
     for dir in "${EXCLUDED_DIRS[@]}"; do
         if contains_excluded_dir "$PATH_ARG" "$dir"; then
-            echo "Blocked: Glob path '$PATH_ARG' is in excluded directory '$dir'." >&2
+            echo "Blocked: Cannot glob in path '$PATH_ARG' - it's inside excluded directory '$dir'. Searching dependency/build directories would return massive file lists. Use tool commands (npm ls, cargo tree, etc.) to inspect dependencies." >&2
             exit 2
         fi
     done
