@@ -63,7 +63,17 @@ bats tests/test-bash-validate.bats --filter "node_modules"
 
 ## Test Structure
 
-The test suite consists of four separate test files:
+The test suite consists of four test files plus a shared helper file:
+
+### Shared Helpers: **test_helper.bash**
+Common testing utilities used by all test files:
+   - `assert_blocked()` - Assert exit code 2 and "Blocked" in output
+   - `assert_allowed()` - Assert exit code 0
+   - `test_bash_command()` / `test_bash_json_command()` - Test bash commands
+   - `test_read_path()` / `test_read_json_path()` - Test file paths
+   - `test_glob_pattern()` - Test glob patterns
+   - `test_grep_path()` - Test grep search paths
+   - `create_json()` - Generate JSON payloads for hook mode testing
 
 ### 1. **test-bash-validate.bats** (20 tests)
 Tests for `bash-validate.sh` - validates Bash tool commands
@@ -73,17 +83,18 @@ Tests for `bash-validate.sh` - validates Bash tool commands
    - Tests command chains with `&&`, `||`, and `;` separators
    - Tests both CLI mode and JSON/hook mode
 
-### 2. **test-read-validate.bats**
+### 2. **test-read-validate.bats** (8 tests)
 Tests for `read-validate.sh` - validates Read tool file paths
    - Blocks: File paths containing excluded directories
    - Allows: Normal file paths in safe directories
+   - Tests both CLI mode and JSON/hook mode
 
-### 3. **test-glob-validate.bats**
+### 3. **test-glob-validate.bats** (6 tests)
 Tests for `glob-validate.sh` - validates Glob tool patterns
    - Blocks: Glob patterns targeting excluded directories
    - Allows: Normal glob patterns in safe directories
 
-### 4. **test-grep-validate.bats**
+### 4. **test-grep-validate.bats** (4 tests)
 Tests for `grep-validate.sh` - validates Grep tool patterns
    - Blocks: Grep operations in excluded directories
    - Allows: Normal grep operations in safe directories
@@ -94,21 +105,22 @@ Tests for `grep-validate.sh` - validates Grep tool patterns
    - Partial matches (e.g., `builds.ts` vs `build/`)
    - Nested paths (e.g., `src/node_modules/package.json`)
 
+**Total: 38 tests**
+
 ## Expected Output
 
 When all tests pass, you'll see output like:
 ```
-# test-bash-validate.bats
+# Running all test suites
+1..38
  ✓ blocks ls on excluded directories
  ✓ blocks find in excluded directories
  ✓ blocks cat from excluded directories
  ...
- ✓ JSON mode: allows safe and tool commands
+ ✓ JSON mode: allows safe file paths
 
-20 tests, 0 failures
+38 tests, 0 failures
 ```
-
-The refactored test suite uses data-driven testing, so each test validates multiple related scenarios. This means fewer test cases but more comprehensive coverage.
 
 ## Adding New Tests
 
@@ -146,11 +158,27 @@ Use the helper functions for consistency:
 }
 ```
 
-### Available helpers:
-- `test_command "cmd"` - Test in CLI mode
-- `test_json_command "cmd"` - Test in JSON/hook mode
+### Available helpers (from test_helper.bash):
+**Assertions:**
 - `assert_blocked` - Assert exit code 2 and "Blocked" in output
 - `assert_allowed` - Assert exit code 0
+
+**Bash testing:**
+- `test_bash_command "cmd"` - Test bash command in CLI mode
+- `test_bash_json_command "cmd"` - Test bash command in JSON/hook mode
+
+**Read testing:**
+- `test_read_path "path"` - Test file path in CLI mode
+- `test_read_json_path "path"` - Test file path in JSON/hook mode
+
+**Glob testing:**
+- `test_glob_pattern "pattern" ["path"]` - Test glob pattern
+
+**Grep testing:**
+- `test_grep_path "path"` - Test grep search path
+
+**JSON generation:**
+- `create_json "tool_name" "param_name" "value"` - Generate JSON payload
 
 ## Continuous Integration
 

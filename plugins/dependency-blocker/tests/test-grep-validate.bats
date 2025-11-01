@@ -2,121 +2,86 @@
 
 # Tests for grep-validate.sh
 
-setup() {
-    DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
-    SCRIPT="$DIR/../scripts/grep-validate.sh"
+# ============================================
+# Setup
+# ============================================
+
+setup_file() {
+    # Run once before all tests
+    export TEST_DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
+    export SCRIPT="$TEST_DIR/../scripts/grep-validate.sh"
     chmod +x "$SCRIPT"
 }
 
-# ============================================
-# Should Block
-# ============================================
-
-@test "blocks search in node_modules" {
-    run "$SCRIPT" "node_modules"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks search in node_modules/" {
-    run "$SCRIPT" "node_modules/"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks search in node_modules/package" {
-    run "$SCRIPT" "node_modules/package"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks search in .git" {
-    run "$SCRIPT" ".git"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks search in vendor" {
-    run "$SCRIPT" "vendor"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks search in target" {
-    run "$SCRIPT" "target"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks search in dist" {
-    run "$SCRIPT" "dist"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks search in build/" {
-    run "$SCRIPT" "build/"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks search in .venv" {
-    run "$SCRIPT" ".venv"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks search in venv" {
-    run "$SCRIPT" "venv"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks absolute path to node_modules" {
-    run "$SCRIPT" "/home/user/project/node_modules"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
+setup() {
+    # Load shared test helpers
+    load test_helper
 }
 
 # ============================================
-# Should Allow
+# Tests: Blocked Search Paths
 # ============================================
 
-@test "allows search in src" {
-    run "$SCRIPT" "src"
-    [ "$status" -eq 0 ]
+@test "blocks grep in excluded directories" {
+    local -a paths=(
+        "node_modules"
+        "node_modules/"
+        "node_modules/package"
+        ".git"
+        "vendor"
+        "target"
+        "dist"
+        "build/"
+        ".venv"
+        "venv"
+    )
+
+    for path in "${paths[@]}"; do
+        test_grep_path "$path"
+        assert_blocked || {
+            echo "Failed to block: $path" >&2
+            return 1
+        }
+    done
 }
 
-@test "allows search in lib" {
-    run "$SCRIPT" "lib"
-    [ "$status" -eq 0 ]
-}
-
-@test "allows search in test" {
-    run "$SCRIPT" "test"
-    [ "$status" -eq 0 ]
-}
-
-@test "allows search in current directory (empty path)" {
-    run "$SCRIPT" ""
-    [ "$status" -eq 0 ]
-}
-
-@test "allows search in src/components" {
-    run "$SCRIPT" "src/components"
-    [ "$status" -eq 0 ]
+@test "blocks grep in absolute paths to excluded directories" {
+    test_grep_path "/home/user/project/node_modules"
+    assert_blocked
 }
 
 # ============================================
-# Edge cases
+# Tests: Allowed Search Paths
 # ============================================
 
-@test "edge case: allows distribution.js path" {
-    run "$SCRIPT" "src/distribution.js"
-    [ "$status" -eq 0 ]
+@test "allows grep in safe directories" {
+    local -a paths=(
+        "src"
+        "lib"
+        "test"
+        ""
+        "src/components"
+    )
+
+    for path in "${paths[@]}"; do
+        test_grep_path "$path"
+        assert_allowed || {
+            echo "Failed to allow: $path" >&2
+            return 1
+        }
+    done
 }
 
-@test "edge case: blocks dist directory" {
-    run "$SCRIPT" "dist"
-    [ "$status" -eq 2 ]
+# ============================================
+# Tests: Edge Cases
+# ============================================
+
+@test "allows files with similar names to excluded dirs" {
+    test_grep_path "src/distribution.js"
+    assert_allowed
+}
+
+@test "blocks exact excluded directory names" {
+    test_grep_path "dist"
+    assert_blocked
 }

@@ -2,109 +2,88 @@
 
 # Tests for glob-validate.sh
 
-setup() {
-    DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
-    SCRIPT="$DIR/../scripts/glob-validate.sh"
+# ============================================
+# Setup
+# ============================================
+
+setup_file() {
+    # Run once before all tests
+    export TEST_DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
+    export SCRIPT="$TEST_DIR/../scripts/glob-validate.sh"
     chmod +x "$SCRIPT"
 }
 
-# ============================================
-# Should Block
-# ============================================
-
-@test "blocks node_modules/** pattern" {
-    run "$SCRIPT" "node_modules/**"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks node_modules/* pattern" {
-    run "$SCRIPT" "node_modules/*"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks **/node_modules/** pattern" {
-    run "$SCRIPT" "**/node_modules/**"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks .git/** pattern" {
-    run "$SCRIPT" ".git/**"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks vendor/** pattern" {
-    run "$SCRIPT" "vendor/**"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks target/** pattern" {
-    run "$SCRIPT" "target/**"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks dist/*.js pattern" {
-    run "$SCRIPT" "dist/*.js"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks build/**/*.js pattern" {
-    run "$SCRIPT" "build/**/*.js"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-@test "blocks with path in node_modules" {
-    run "$SCRIPT" "*.js" "node_modules/react"
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
+setup() {
+    # Load shared test helpers
+    load test_helper
 }
 
 # ============================================
-# Should Allow
+# Tests: Blocked Glob Patterns
 # ============================================
 
-@test "allows src/** pattern" {
-    run "$SCRIPT" "src/**"
-    [ "$status" -eq 0 ]
+@test "blocks glob patterns targeting excluded directories" {
+    local -a patterns=(
+        "node_modules/**"
+        "node_modules/*"
+        "**/node_modules/**"
+        ".git/**"
+        "vendor/**"
+        "target/**"
+        "dist/*.js"
+        "build/**/*.js"
+    )
+
+    for pattern in "${patterns[@]}"; do
+        test_glob_pattern "$pattern"
+        assert_blocked || {
+            echo "Failed to block pattern: $pattern" >&2
+            return 1
+        }
+    done
 }
 
-@test "allows **/*.js pattern" {
-    run "$SCRIPT" "**/*.js"
-    [ "$status" -eq 0 ]
-}
-
-@test "allows lib/**/*.ts pattern" {
-    run "$SCRIPT" "lib/**/*.ts"
-    [ "$status" -eq 0 ]
-}
-
-@test "allows *.json pattern" {
-    run "$SCRIPT" "*.json"
-    [ "$status" -eq 0 ]
-}
-
-@test "allows with safe path" {
-    run "$SCRIPT" "*.js" "src"
-    [ "$status" -eq 0 ]
+@test "blocks glob with path argument in excluded directory" {
+    test_glob_pattern "*.js" "node_modules/react"
+    assert_blocked
 }
 
 # ============================================
-# Edge cases
+# Tests: Allowed Glob Patterns
 # ============================================
 
-@test "edge case: allows builds.ts (not build/)" {
-    run "$SCRIPT" "src/builds.ts"
-    [ "$status" -eq 0 ]
+@test "allows glob patterns in safe directories" {
+    local -a patterns=(
+        "src/**"
+        "**/*.js"
+        "lib/**/*.ts"
+        "*.json"
+    )
+
+    for pattern in "${patterns[@]}"; do
+        test_glob_pattern "$pattern"
+        assert_allowed || {
+            echo "Failed to allow pattern: $pattern" >&2
+            return 1
+        }
+    done
 }
 
-@test "edge case: blocks build/ directory" {
-    run "$SCRIPT" "build/*"
-    [ "$status" -eq 2 ]
+@test "allows glob with safe path argument" {
+    test_glob_pattern "*.js" "src"
+    assert_allowed
+}
+
+# ============================================
+# Tests: Edge Cases
+# ============================================
+
+@test "allows files with similar names to excluded dirs" {
+    test_glob_pattern "src/builds.ts"
+    assert_allowed
+}
+
+@test "blocks exact excluded directory patterns" {
+    test_glob_pattern "build/*"
+    assert_blocked
 }

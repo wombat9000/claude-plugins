@@ -14,55 +14,8 @@ setup_file() {
 }
 
 setup() {
-    # Run before each test
-    load_test_helpers
-}
-
-# ============================================
-# Test Helpers
-# ============================================
-
-load_test_helpers() {
-    # Make helpers available to each test
-    true
-}
-
-# Assert that a command was blocked (exit code 2, "Blocked" in output)
-assert_blocked() {
-    [ "$status" -eq 2 ]
-    [[ "$output" =~ "Blocked" ]]
-}
-
-# Assert that a command was allowed (exit code 0)
-assert_allowed() {
-    [ "$status" -eq 0 ]
-}
-
-# Test a command in CLI mode
-test_command() {
-    run "$SCRIPT" "$1"
-}
-
-# Create JSON payload for hook mode testing
-create_json() {
-    local command="$1"
-    cat <<EOF
-{
-  "session_id": "test",
-  "hook_event_name": "PreToolUse",
-  "tool_name": "Bash",
-  "tool_input": {
-    "command": "$command"
-  }
-}
-EOF
-}
-
-# Test a command in JSON/hook mode
-test_json_command() {
-    local command="$1"
-    local json=$(create_json "$command")
-    run bash -c "echo '$json' | '$SCRIPT'"
+    # Load shared test helpers
+    load test_helper
 }
 
 # ============================================
@@ -77,7 +30,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_blocked || {
             echo "Failed to block: $cmd" >&2
             return 1
@@ -93,7 +46,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_blocked || {
             echo "Failed to block: $cmd" >&2
             return 1
@@ -109,7 +62,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_blocked || {
             echo "Failed to block: $cmd" >&2
             return 1
@@ -125,7 +78,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_blocked || {
             echo "Failed to block: $cmd" >&2
             return 1
@@ -134,7 +87,7 @@ test_json_command() {
 }
 
 @test "blocks cd to excluded directories" {
-    test_command "cd build && ls"
+    test_bash_command "cd build && ls"
     assert_blocked
 }
 
@@ -145,7 +98,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_blocked || {
             echo "Failed to block: $cmd" >&2
             return 1
@@ -165,7 +118,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_allowed || {
             echo "Failed to allow: $cmd" >&2
             return 1
@@ -180,7 +133,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_allowed || {
             echo "Failed to allow: $cmd" >&2
             return 1
@@ -201,7 +154,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_allowed || {
             echo "Failed to allow: $cmd" >&2
             return 1
@@ -216,7 +169,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_allowed || {
             echo "Failed to allow: $cmd" >&2
             return 1
@@ -235,7 +188,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_allowed || {
             echo "Failed to allow: $cmd" >&2
             return 1
@@ -255,7 +208,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_allowed || {
             echo "Failed to allow: $cmd" >&2
             return 1
@@ -272,7 +225,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_allowed || {
             echo "Failed to allow: $cmd" >&2
             return 1
@@ -292,7 +245,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_blocked || {
             echo "Failed to block: $cmd" >&2
             return 1
@@ -301,7 +254,7 @@ test_json_command() {
 }
 
 @test "blocks excluded directory access before tool invocation" {
-    test_command "cat node_modules/file && npm run build"
+    test_bash_command "cat node_modules/file && npm run build"
     assert_blocked
 }
 
@@ -312,7 +265,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_command "$cmd"
+        test_bash_command "$cmd"
         assert_blocked || {
             echo "Failed to block: $cmd" >&2
             return 1
@@ -326,13 +279,13 @@ test_json_command() {
 
 @test "allows commands with similar names to excluded dirs" {
     # Should allow "node_module" (without 's')
-    test_command "ls node_module"
+    test_bash_command "ls node_module"
     assert_allowed
 }
 
 @test "blocks exact match of excluded directory names" {
     # Should block exact "dist"
-    test_command "ls dist"
+    test_bash_command "ls dist"
     assert_blocked
 }
 
@@ -348,7 +301,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_json_command "$cmd"
+        test_bash_json_command "$cmd"
         assert_blocked || {
             echo "Failed to block JSON command: $cmd" >&2
             return 1
@@ -364,7 +317,7 @@ test_json_command() {
     )
 
     for cmd in "${commands[@]}"; do
-        test_json_command "$cmd"
+        test_bash_json_command "$cmd"
         assert_allowed || {
             echo "Failed to allow JSON command: $cmd" >&2
             return 1
