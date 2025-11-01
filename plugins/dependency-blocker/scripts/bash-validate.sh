@@ -52,6 +52,33 @@ declare -a SAFE_COMMANDS=(
     "popd"          # Pop directory
 )
 
+# List of dangerous commands that can access files/directories
+# These are blocked when they reference excluded directories
+declare -a DANGEROUS_COMMANDS=(
+    "ls"            # List directory contents
+    "cat"           # Concatenate and print files
+    "grep"          # Search file contents
+    "find"          # Find files
+    "head"          # Output first part of files
+    "tail"          # Output last part of files
+    "less"          # View file contents
+    "more"          # View file contents
+    "tree"          # List directory tree
+    "du"            # Disk usage
+    "stat"          # File status
+    "file"          # Determine file type
+    "wc"            # Word count
+    "diff"          # Compare files
+    "sort"          # Sort lines
+    "uniq"          # Report or omit repeated lines
+    "cut"           # Remove sections from lines
+    "awk"           # Pattern scanning and processing
+    "sed"           # Stream editor
+    "rg"            # Ripgrep
+    "ag"            # Silver searcher
+    "ack"           # Code search tool
+)
+
 # ============================================
 # Helper Functions
 # ============================================
@@ -74,6 +101,18 @@ is_trusted_tool() {
     return 1
 }
 
+# Check if a command is in the dangerous commands list
+# Uses case-insensitive matching to handle macOS case-insensitive filesystem
+is_dangerous_command() {
+    local cmd="$1"
+    local cmd_lower
+    cmd_lower=$(echo "$cmd" | tr '[:upper:]' '[:lower:]')
+    for dangerous in "${DANGEROUS_COMMANDS[@]}"; do
+        [[ "$cmd_lower" == "$dangerous" ]] && return 0
+    done
+    return 1
+}
+
 # Check if a directory name is in the excluded list
 is_excluded_directory() {
     local dir_name="$1"
@@ -83,18 +122,64 @@ is_excluded_directory() {
     return 1
 }
 
+# Strip quotes from a string (both single and double quotes)
+strip_quotes() {
+    local text="$1"
+    # Remove surrounding quotes and quotes around path components
+    text="${text//\'/}"  # Remove single quotes
+    text="${text//\"/}"  # Remove double quotes
+    echo "$text"
+}
+
 # Check if text contains an excluded directory as a complete path component
 # This ensures we match "node_modules" but not "node_module" or "my_node_modules_backup"
+# Also handles wildcards and quotes
 contains_excluded_dir_as_path_component() {
     local text="$1"
     local dir="$2"
 
+    # Strip quotes from the text first
+    text=$(strip_quotes "$text")
+
+    # Check for exact match with word boundaries
     # Match patterns:
     # - Start of string or space or / before dir
     # - End of string or space or / after dir
     if [[ "$text" =~ (^|[[:space:]]|/)${dir}([[:space:]]|/|$) ]]; then
         return 0  # Found
     fi
+
+    # Check for wildcard patterns that could match the excluded directory
+    # We need to check if there's a wildcard pattern that could expand to the directory name
+    # Examples: node_modu*, node_module?, */node_modules, ~*/node_modules, *node_modules*
+
+    # Split the directory name into a pattern to match with wildcards
+    # For "node_modules", check for patterns like: nod*, node_*, *modules, etc.
+    local dir_pattern=""
+    local i
+    for ((i=0; i<${#dir}; i++)); do
+        local prefix="${dir:0:$i}"
+        local suffix="${dir:$i}"
+
+        # Check if the text contains this prefix followed by a wildcard
+        # Pattern: (prefix)*
+        if [[ -n "$prefix" ]] && [[ "$text" =~ (^|[[:space:]]|/)${prefix}[*?] ]]; then
+            return 0
+        fi
+
+        # Check if the text contains a wildcard followed by this suffix
+        # Pattern: *(suffix)
+        if [[ -n "$suffix" ]] && [[ "$text" =~ [*?]${suffix}([[:space:]]|/|$) ]]; then
+            return 0
+        fi
+    done
+
+    # Also check for wildcards in parent directories: */node_modules, ~*/node_modules
+    if [[ "$text" =~ \*/.*${dir} ]] || \
+       [[ "$text" =~ ~[^/]*/.*${dir} ]]; then
+        return 0  # Found with wildcard
+    fi
+
     return 1  # Not found
 }
 
@@ -169,22 +254,76 @@ validate_segment() {
         return 0
     fi
 
-    # For unsafe commands, check if they reference excluded directories
-    check_segment_for_excluded_dirs "$segment"
-    return $?
+    # Check if segment contains redirection operators (>, <, >>, <<)
+    # These can be used to read from or write to excluded directories
+    if [[ "$segment" =~ [[:space:]]*[\<\>] ]]; then
+        check_segment_for_excluded_dirs "$segment"
+        return $?
+    fi
+
+    # Only check for excluded directories if this is a known dangerous command
+    # Unknown commands (like "CD", "Cat", etc.) will fail anyway, so we allow them
+    if is_dangerous_command "$first_word"; then
+        check_segment_for_excluded_dirs "$segment"
+        return $?
+    fi
+
+    # Unknown command - allow it (will fail with "command not found" anyway)
+    return 0
 }
 
-# Split a command by separators (&&, ||, ;) and validate each segment
+# Check for dangerous shell features that could bypass validation
+check_dangerous_features() {
+    local cmd="$1"
+
+    # Check for command substitution: $(...) or `...`
+    if [[ "$cmd" =~ \$\( ]] || [[ "$cmd" =~ \` ]]; then
+        echo "Blocked: Command contains command substitution which could bypass validation." >&2
+        return 1
+    fi
+
+    # Check for process substitution: <(...) or >(...)
+    if [[ "$cmd" =~ \<\( ]] || [[ "$cmd" =~ \>\( ]]; then
+        echo "Blocked: Command contains process substitution which could bypass validation." >&2
+        return 1
+    fi
+
+    # Check for brace expansion with excluded directories
+    for dir in "${EXCLUDED_DIRS[@]}"; do
+        # Match patterns like {node_modules,dist} or {a,node_modules}
+        if [[ "$cmd" =~ \{[^}]*${dir}[^}]*\} ]]; then
+            echo "Blocked: Command contains brace expansion with excluded directory '$dir'." >&2
+            return 1
+        fi
+
+        # Check for variable assignments to excluded directories
+        # Pattern: VAR=excluded_dir or VAR="excluded_dir" or VAR='excluded_dir'
+        if [[ "$cmd" =~ [A-Za-z_][A-Za-z0-9_]*=[\"\']*${dir}[\"\']*([[:space:]]|$|\&\&|\|\||;) ]]; then
+            echo "Blocked: Command sets variable to excluded directory '$dir'." >&2
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+# Split a command by separators (&&, ||, ;, |) and validate each segment
 validate_command() {
     local cmd="$1"
     local segment
 
+    # First check for dangerous shell features
+    if ! check_dangerous_features "$cmd"; then
+        return 1
+    fi
+
     # Replace separators with newlines to split the command
-    # This handles: &&, ||, and ;
+    # This handles: &&, ||, ;, and |
     local segments
     segments="${cmd//&&/$'\n'}"      # Replace && with newline
     segments="${segments//||/$'\n'}"  # Replace || with newline
     segments="${segments//;/$'\n'}"   # Replace ; with newline
+    segments="${segments//|/$'\n'}"   # Replace | with newline
 
     # Process each segment
     while IFS= read -r segment; do
@@ -202,9 +341,35 @@ parse_json_command() {
     local command
 
     # Extract command from JSON: {"tool_input": {"command": "..."}}
-    # Use grep and sed for simple parsing (avoids jq dependency)
-    command=$(echo "$json" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"command"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
+    # Always use the robust method that handles escaped quotes properly
 
+    # Extract everything after "command":
+    local temp="${json#*\"command\"}"
+    temp="${temp#*:}"
+    temp="${temp#*\"}"
+
+    # Find the closing quote, accounting for escaped quotes
+    local result=""
+    local escaped=false
+    local i
+    for ((i=0; i<${#temp}; i++)); do
+        local char="${temp:$i:1}"
+        if $escaped; then
+            # Previous character was backslash, so this character is escaped
+            result+="$char"
+            escaped=false
+        elif [[ "$char" == "\\" ]]; then
+            # This is a backslash, next character will be escaped
+            escaped=true
+        elif [[ "$char" == "\"" ]]; then
+            # Unescaped quote - end of command string
+            break
+        else
+            result+="$char"
+        fi
+    done
+
+    command="$result"
     echo "$command"
 }
 

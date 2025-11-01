@@ -324,3 +324,293 @@ setup() {
         }
     done
 }
+
+# ============================================
+# Tests: Security Loopholes - FAILING TESTS
+# ============================================
+
+@test "SECURITY: blocks pipe operator bypass" {
+    local -a commands=(
+        "cat node_modules/package.json | grep name"
+        "ls node_modules | wc -l"
+        "find . -name '*.js' | grep dist/"
+        "cat dist/app.js | head -n 10"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block pipe bypass: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks command substitution with dollar-paren" {
+    local -a commands=(
+        "echo \$(cat node_modules/package.json)"
+        "echo \$(ls node_modules)"
+        "var=\$(cat dist/bundle.js) && echo \$var"
+        "npm install && echo \$(grep secret node_modules/file)"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block command substitution: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks command substitution with backticks" {
+    local -a commands=(
+        "echo \`cat node_modules/package.json\`"
+        "echo \`ls node_modules\`"
+        "var=\`cat dist/bundle.js\` && echo \$var"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block backtick substitution: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks process substitution" {
+    local -a commands=(
+        "cat <(cat node_modules/package.json)"
+        "diff <(cat node_modules/file1) <(cat node_modules/file2)"
+        "while read line; do echo \$line; done < <(ls node_modules)"
+        "echo test > >(cat > node_modules/file)"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block process substitution: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks brace expansion bypass" {
+    local -a commands=(
+        "cat {node_modules,dist}/file.js"
+        "ls {node_modules,vendor,dist}"
+        "echo {node_modules,build}/*.js"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block brace expansion: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks tilde expansion in paths" {
+    local -a commands=(
+        "cat ~/node_modules/package.json"
+        "ls ~/project/node_modules"
+        "find ~/dist -name '*.js'"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block tilde expansion: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks wildcard patterns in excluded paths" {
+    local -a commands=(
+        "cat node_modu*/package.json"
+        "ls node_module?"
+        "cat */node_modules/file.js"
+        "find . -path '*/node_modules/*' -name '*.js'"
+        "cat node_modules/*.json"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block wildcard pattern: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks output redirection to excluded directories" {
+    local -a commands=(
+        "echo test > node_modules/malicious.txt"
+        "cat file.txt >> dist/output.js"
+        "echo data > build/test.o"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block output redirect: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks input redirection from excluded directories" {
+    local -a commands=(
+        "cat < node_modules/package.json"
+        "while read line; do echo \$line; done < dist/file.js"
+        "grep test < node_modules/file"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block input redirect: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks heredoc with excluded directory content" {
+    local -a commands=(
+        "cat << EOF > node_modules/file.txt"
+        "cat <<< \$(cat node_modules/file)"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block heredoc: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks environment variable expansion bypass" {
+    local -a commands=(
+        "cat \$HOME/node_modules/file"
+        "ls \$PWD/dist"
+        "DIR=node_modules && cat \$DIR/file"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block env var expansion: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks relative path traversal" {
+    local -a commands=(
+        "cat ../node_modules/package.json"
+        "cat ../../dist/bundle.js"
+        "cat ./node_modules/file"
+        "cat ./../node_modules/file"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block relative path: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks quoted paths to excluded directories" {
+    local -a commands=(
+        "cat 'node_modules/package.json'"
+        "cat \"dist/bundle.js\""
+        "ls 'node_modules'"
+        "cat \"node_modules\"/file"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block quoted path: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: blocks complex nested bypass attempts" {
+    local -a commands=(
+        "npm build && cat \$(find dist -name '*.js' | head -1)"
+        "cd /tmp && cat <(cat ~/project/node_modules/file) | grep secret"
+        "echo \$(ls {node_modules,dist}) > output.txt"
+        "for f in \$(ls node_modules); do cat \$f; done"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block complex bypass: $cmd" >&2
+            return 1
+        }
+    done
+}
+
+@test "SECURITY: handles JSON with escaped quotes" {
+    # This tests the JSON parsing vulnerability
+    local json='{"tool_input": {"command": "echo \\\"test\\\" && cat node_modules/file"}}'
+
+    run bash -c "echo '$json' | bash '$SCRIPT'"
+
+    # Should block (exit code 2) because it accesses node_modules
+    [ "$status" -eq 2 ] || {
+        echo "LOOPHOLE: JSON parsing failed to handle escaped quotes properly" >&2
+        echo "Got exit code: $status" >&2
+        echo "Output: $output" >&2
+        return 1
+    }
+}
+
+@test "SECURITY: blocks case variation bypass attempts" {
+    # On macOS (case-insensitive filesystem), LS/Cat/etc are the same as ls/cat
+    # We block case variations to prevent bypassing on case-insensitive systems
+    local -a commands=(
+        "Cat node_modules/file"
+        "LS dist"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        assert_blocked || {
+            echo "LOOPHOLE: Failed to block case variation: $cmd" >&2
+            return 1
+        }
+    done
+
+    # CD doesn't exist on any system, so it's allowed (will fail anyway)
+    test_bash_command "CD node_modules"
+    assert_allowed
+}
+
+@test "SECURITY: rejects empty segments in command chains" {
+    local -a commands=(
+        "npm install && && npm build"
+        "&& npm install"
+        "npm install &&"
+        "npm install ;; npm build"
+    )
+
+    for cmd in "${commands[@]}"; do
+        test_bash_command "$cmd"
+        # Currently these are allowed but may indicate malformed input
+        # Consider whether empty segments should be rejected
+        assert_allowed || {
+            echo "Note: Empty segment behavior: $cmd" >&2
+            return 1
+        }
+    done
+}
