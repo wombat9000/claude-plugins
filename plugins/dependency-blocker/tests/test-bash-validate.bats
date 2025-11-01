@@ -260,3 +260,105 @@ setup() {
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
+
+# ============================================
+# Command segments - complex chains
+# ============================================
+
+@test "allows cd then npm run build" {
+    run "$SCRIPT" "cd /path && npm run build"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows pwd then npm install" {
+    run "$SCRIPT" "pwd && npm install"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows pushd then cargo build" {
+    run "$SCRIPT" "pushd /path && cargo build"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows multiple tool invocations" {
+    run "$SCRIPT" "npm install && npm run build"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows cd with multiple tools" {
+    run "$SCRIPT" "cd /path && npm install && npm run build"
+    [ "$status" -eq 0 ]
+}
+
+@test "blocks npm run build then grep in dist" {
+    run "$SCRIPT" "npm run build && grep secret dist/app.js"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "blocks cat then npm run build" {
+    run "$SCRIPT" "cat node_modules/file && npm run build"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "blocks grep in build after npm" {
+    run "$SCRIPT" "npm run build ; grep -r error build/"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "blocks find in dist after make" {
+    run "$SCRIPT" "make build || find dist -name '*.js'"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "allows tool then safe command" {
+    run "$SCRIPT" "npm install && pwd"
+    [ "$status" -eq 0 ]
+}
+
+@test "blocks dangerous command in middle of chain" {
+    run "$SCRIPT" "cd /path && cat node_modules/pkg && npm run build"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "allows multiple safe navigation commands" {
+    run "$SCRIPT" "cd /a && pushd /b && npm build && popd"
+    [ "$status" -eq 0 ]
+}
+
+@test "blocks ls node_modules in middle of chain" {
+    run "$SCRIPT" "npm install && ls node_modules && npm run build"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "JSON: blocks npm run build then grep in dist" {
+    local json='{
+  "session_id": "test",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "npm run build && grep secret dist/app.js"
+  }
+}'
+    run bash -c "echo '$json' | '$SCRIPT'"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "JSON: allows cd then npm run build" {
+    local json='{
+  "session_id": "test",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cd /path && npm run build"
+  }
+}'
+    run bash -c "echo '$json' | '$SCRIPT'"
+    [ "$status" -eq 0 ]
+}
