@@ -11,9 +11,13 @@
 # - Direct access (cat, grep, find, ls) on excluded dirs is blocked
 # - Any unsafe command in a chain is treated as direct access
 
+# ============================================
+# Configuration
+# ============================================
+
 # List of excluded directories (critical bloat offenders)
 # Each of these can cause massive token waste if accessed
-EXCLUDED_DIRS=(
+declare -a EXCLUDED_DIRS=(
     "node_modules"  # JS/Node dependencies - can be 100k+ files
     ".git"          # Git version control history - entire repo history
     "vendor"        # PHP/Go/Ruby dependencies - like node_modules for other languages
@@ -25,7 +29,7 @@ EXCLUDED_DIRS=(
 )
 
 # List of trusted tool invocations that can safely manage their own directories
-TRUSTED_TOOLS=(
+declare -a TRUSTED_TOOLS=(
     "npm"           # Node Package Manager
     "yarn"          # Yarn package manager
     "pnpm"          # pnpm package manager
@@ -41,12 +45,172 @@ TRUSTED_TOOLS=(
 )
 
 # List of truly safe navigation commands
-# Note: cd is NOT included here - it will be validated separately
-SAFE_COMMANDS=(
+# Note: cd is handled separately - it's allowed unless navigating to excluded dirs
+declare -a SAFE_COMMANDS=(
     "pwd"           # Print working directory
     "pushd"         # Push directory
     "popd"          # Pop directory
 )
+
+# ============================================
+# Helper Functions
+# ============================================
+
+# Check if a command is in the safe commands list
+is_safe_command() {
+    local cmd="$1"
+    for safe_cmd in "${SAFE_COMMANDS[@]}"; do
+        [[ "$cmd" == "$safe_cmd" ]] && return 0
+    done
+    return 1
+}
+
+# Check if a command is in the trusted tools list
+is_trusted_tool() {
+    local cmd="$1"
+    for tool in "${TRUSTED_TOOLS[@]}"; do
+        [[ "$cmd" == "$tool" ]] && return 0
+    done
+    return 1
+}
+
+# Check if a directory name is in the excluded list
+is_excluded_directory() {
+    local dir_name="$1"
+    for excluded in "${EXCLUDED_DIRS[@]}"; do
+        [[ "$dir_name" == "$excluded" ]] && return 0
+    done
+    return 1
+}
+
+# Check if text contains an excluded directory as a complete path component
+# This ensures we match "node_modules" but not "node_module" or "my_node_modules_backup"
+contains_excluded_dir_as_path_component() {
+    local text="$1"
+    local dir="$2"
+
+    # Match patterns:
+    # - Start of string or space or / before dir
+    # - End of string or space or / after dir
+    if [[ "$text" =~ (^|[[:space:]]|/)${dir}([[:space:]]|/|$) ]]; then
+        return 0  # Found
+    fi
+    return 1  # Not found
+}
+
+# Extract the target directory from a cd command
+get_cd_target() {
+    local segment="$1"
+    local target
+
+    # Remove "cd" and leading whitespace
+    target="${segment#cd}"
+    target="${target#"${target%%[![:space:]]*}"}"  # trim leading whitespace
+
+    # Extract first word (the directory argument)
+    target="${target%% *}"
+
+    echo "$target"
+}
+
+# Validate a cd command - blocks navigation to excluded directories
+validate_cd_command() {
+    local segment="$1"
+    local target
+
+    target=$(get_cd_target "$segment")
+
+    # Check if the target is an excluded directory
+    if is_excluded_directory "$target"; then
+        echo "Blocked: Command contains excluded directory '$target'." >&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Check if a segment contains any excluded directories
+check_segment_for_excluded_dirs() {
+    local segment="$1"
+
+    for dir in "${EXCLUDED_DIRS[@]}"; do
+        if contains_excluded_dir_as_path_component "$segment" "$dir"; then
+            echo "Blocked: Command contains excluded directory '$dir'." >&2
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+# Validate a single command segment
+validate_segment() {
+    local segment="$1"
+    local first_word
+
+    # Trim leading and trailing whitespace
+    segment="${segment#"${segment%%[![:space:]]*}"}"  # trim leading
+    segment="${segment%"${segment##*[![:space:]]}"}"  # trim trailing
+
+    # Skip empty segments
+    [[ -z "$segment" ]] && return 0
+
+    # Extract the first word (the command)
+    first_word="${segment%% *}"
+
+    # Special handling for cd - check if it's navigating to an excluded directory
+    if [[ "$first_word" == "cd" ]]; then
+        validate_cd_command "$segment"
+        return $?
+    fi
+
+    # Check if the command is safe or trusted
+    if is_safe_command "$first_word" || is_trusted_tool "$first_word"; then
+        return 0
+    fi
+
+    # For unsafe commands, check if they reference excluded directories
+    check_segment_for_excluded_dirs "$segment"
+    return $?
+}
+
+# Split a command by separators (&&, ||, ;) and validate each segment
+validate_command() {
+    local cmd="$1"
+    local segment
+
+    # Replace separators with newlines to split the command
+    # This handles: &&, ||, and ;
+    local segments
+    segments="${cmd//&&/$'\n'}"      # Replace && with newline
+    segments="${segments//||/$'\n'}"  # Replace || with newline
+    segments="${segments//;/$'\n'}"   # Replace ; with newline
+
+    # Process each segment
+    while IFS= read -r segment; do
+        if ! validate_segment "$segment"; then
+            return 1
+        fi
+    done <<< "$segments"
+
+    return 0
+}
+
+# Parse command from JSON input
+parse_json_command() {
+    local json="$1"
+    local command
+
+    # Extract command from JSON: {"tool_input": {"command": "..."}}
+    # Use grep and sed for simple parsing (avoids jq dependency)
+    command=$(echo "$json" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"command"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
+
+    echo "$command"
+}
+
+# ============================================
+# Main Logic
+# ============================================
 
 # Read input - either JSON from stdin or command-line arguments
 if [ $# -gt 0 ]; then
@@ -55,8 +219,7 @@ if [ $# -gt 0 ]; then
 else
     # No arguments, read JSON from stdin (Claude Code hook mode)
     INPUT=$(cat)
-    # Extract command from JSON: {"tool_input": {"command": "..."}}
-    CMD=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"command"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
+    CMD=$(parse_json_command "$INPUT")
 fi
 
 # Skip check if no command was extracted
@@ -64,142 +227,8 @@ if [ -z "$CMD" ]; then
     exit 0
 fi
 
-# Function to check if a command (first word) is safe/trusted
-is_safe_or_trusted() {
-    local cmd="$1"
-
-    # Check safe commands
-    for safe in "${SAFE_COMMANDS[@]}"; do
-        [[ "$cmd" == "$safe" ]] && return 0
-    done
-
-    # Check trusted tools
-    for tool in "${TRUSTED_TOOLS[@]}"; do
-        [[ "$cmd" == "$tool" ]] && return 0
-    done
-
-    return 1
-}
-
-# Function to check if a directory name appears as a complete path component
-contains_excluded_dir() {
-    local text="$1"
-    local dir="$2"
-
-    if [[ "$text" =~ (^|[[:space:]]|/)${dir}([[:space:]]|/|$) ]]; then
-        return 0  # Found
-    fi
-    return 1  # Not found
-}
-
-# Function to validate command segments separated by &&, ||, ;
-# Each segment's first word must be a safe command or trusted tool,
-# otherwise the entire segment is checked for excluded directory access
-validate_segments() {
-    local cmd="$1"
-    local awkprog
-
-    read -r -d '' awkprog << 'AWKEOF'
-    BEGIN {
-        # Build safe commands lookup
-        safe["pwd"] = 1
-        safe["pushd"] = 1
-        safe["popd"] = 1
-
-        # Build trusted tools lookup
-        trusted["npm"] = 1
-        trusted["yarn"] = 1
-        trusted["pnpm"] = 1
-        trusted["cargo"] = 1
-        trusted["make"] = 1
-        trusted["python"] = 1
-        trusted["go"] = 1
-        trusted["ruby"] = 1
-        trusted["java"] = 1
-        trusted["gradle"] = 1
-        trusted["maven"] = 1
-        trusted["pip"] = 1
-
-        # Build excluded dirs lookup
-        excluded[0] = "node_modules"
-        excluded[1] = ".git"
-        excluded[2] = "vendor"
-        excluded[3] = "target"
-        excluded[4] = ".venv"
-        excluded[5] = "venv"
-        excluded[6] = "dist"
-        excluded[7] = "build"
-
-        # Patterns for excluded dirs (for checking cd arguments)
-        excluded_pattern = "^(node_modules|\\.git|vendor|target|\\.venv|venv|dist|build)$"
-    }
-    {
-        # Replace separators with newline for easier processing
-        cmd_line = $0
-        gsub(/[[:space:]]*&&[[:space:]]*/, "\n", cmd_line)
-        gsub(/[[:space:]]*\|\|[[:space:]]*/, "\n", cmd_line)
-        gsub(/[[:space:]]*;[[:space:]]*/, "\n", cmd_line)
-
-        # Split into segments
-        n = split(cmd_line, segs, "\n")
-        for (i = 1; i <= n; i++) {
-            segment = segs[i]
-
-            # Trim whitespace
-            gsub(/^[[:space:]]+/, "", segment)
-            gsub(/[[:space:]]+$/, "", segment)
-
-            if (segment == "") continue
-
-            # Get first word
-            first_word = segment
-            sub(/[[:space:]]+.*/, "", first_word)
-
-            # Special handling for cd - check if it's navigating to excluded dir
-            if (first_word == "cd") {
-                # Extract the cd argument
-                cd_arg = segment
-                sub(/^cd[[:space:]]+/, "", cd_arg)
-                # Remove trailing options
-                sub(/[[:space:]]+.*/, "", cd_arg)
-                # Trim
-                gsub(/^[[:space:]]+/, "", cd_arg)
-                gsub(/[[:space:]]+$/, "", cd_arg)
-
-                # Check if cd_arg is an excluded directory
-                if (match(cd_arg, excluded_pattern)) {
-                    print "Blocked: Command contains excluded directory '" cd_arg "'." > "/dev/stderr"
-                    exit 2
-                }
-                # cd with safe argument is allowed
-                continue
-            }
-
-            # Check if safe or trusted
-            is_safe = (first_word in safe || first_word in trusted)
-
-            if (!is_safe) {
-                # Check for excluded directories
-                for (d = 0; d <= 7; d++) {
-                    dir = excluded[d]
-                    # Check if dir appears as complete path component
-                    if (match(segment, "(^| |/)" dir "( |/|$)")) {
-                        print "Blocked: Command contains excluded directory '" dir "'." > "/dev/stderr"
-                        exit 2
-                    }
-                }
-            }
-        }
-    }
-AWKEOF
-
-    echo "$cmd" | awk "$awkprog" || return $?
-
-    return 0
-}
-
 # Validate the entire command
-if ! validate_segments "$CMD"; then
+if ! validate_command "$CMD"; then
     exit 2
 fi
 
