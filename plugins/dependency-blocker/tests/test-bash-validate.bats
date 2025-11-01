@@ -156,3 +156,107 @@ setup() {
     [ "$status" -eq 2 ]
     [[ "$output" =~ "Blocked" ]]
 }
+
+# ============================================
+# Tool invocations - Should Allow
+# ============================================
+
+@test "allows npm run build" {
+    run "$SCRIPT" "npm run build"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows npm run dev" {
+    run "$SCRIPT" "npm run dev"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows npm ci" {
+    run "$SCRIPT" "npm ci"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows yarn install" {
+    run "$SCRIPT" "yarn install"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows yarn build" {
+    run "$SCRIPT" "yarn build"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows pnpm install" {
+    run "$SCRIPT" "pnpm install"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows cargo build" {
+    run "$SCRIPT" "cargo build"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows cargo test" {
+    run "$SCRIPT" "cargo test"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows make build" {
+    run "$SCRIPT" "make build"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows python -m pip install" {
+    run "$SCRIPT" "python -m pip install"
+    [ "$status" -eq 0 ]
+}
+
+@test "allows go build" {
+    run "$SCRIPT" "go build"
+    [ "$status" -eq 0 ]
+}
+
+@test "blocks cat dist file" {
+    run "$SCRIPT" "cat dist/bundle.js"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "blocks grep in dist file" {
+    run "$SCRIPT" "grep 'error' dist/app.js"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "blocks find in build" {
+    run "$SCRIPT" "find build -name '*.o'"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
+
+@test "JSON: allows npm run build" {
+    local json='{
+  "session_id": "test",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "npm run build"
+  }
+}'
+    run bash -c "echo '$json' | '$SCRIPT'"
+    [ "$status" -eq 0 ]
+}
+
+@test "JSON: blocks cat dist file" {
+    local json='{
+  "session_id": "test",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cat dist/file.js"
+  }
+}'
+    run bash -c "echo '$json' | '$SCRIPT'"
+    [ "$status" -eq 2 ]
+    [[ "$output" =~ "Blocked" ]]
+}
