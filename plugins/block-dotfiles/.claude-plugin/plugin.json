@@ -3,6 +3,16 @@
   "description": "Blocks access to sensitive dotfiles and configuration files containing credentials",
   "version": "1.0.0",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session-context.sh"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

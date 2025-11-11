@@ -8,13 +8,14 @@ The Block Dotfiles plugin automatically prevents Claude Code from reading or exe
 
 ## Features
 
+- **Proactive Security Context**: SessionStart hook warns Claude about sensitive files upfront
 - **Bash Command Validation**: Blocks bash commands that reference sensitive dotfiles
 - **Read Validation**: Prevents file reads from sensitive configuration files
 - **Glob Validation**: Blocks glob patterns that target sensitive dotfiles
 - **Grep Validation**: Blocks grep searches in sensitive files
 - **Comprehensive Coverage**: Protects 20+ common sensitive file types
 - **Security Focused**: Prevents accidental exposure of credentials and secrets
-- **Extensive Testing**: 104 tests ensuring reliable blocking behavior
+- **Extensive Testing**: 105 tests ensuring reliable blocking behavior
 
 ## Installation
 
@@ -57,14 +58,30 @@ By default, the following sensitive files and directories are blocked:
 
 ## How It Works
 
-The plugin uses four validation hooks that run before tool execution:
+The plugin uses a SessionStart hook for proactive security warnings and four PreToolUse validation hooks that run before tool execution:
 
-1. **Bash**: Validates bash command executions
-2. **Read**: Validates file read operations
-3. **Glob**: Validates file pattern matching operations
-4. **Grep**: Validates content search operations
+### 0. SessionStart Hook
+Provides upfront security context to Claude:
+- Warns about all sensitive files blocked by the plugin at session start
+- Lists categories: shell configs, environment files, credential stores
+- Explicitly instructs Claude NOT to access these files
+- Explains they contain credentials and secrets
+- Recommends asking the user for configuration instead
+- Runs once per session, before any tools are executed
 
-When Claude attempts to access a blocked file, the hook will:
+### 1. Bash Hook
+Validates bash command executions
+
+### 2. Read Hook
+Validates file read operations
+
+### 3. Glob Hook
+Validates file pattern matching operations
+
+### 4. Grep Hook
+Validates content search operations
+
+When Claude attempts to access a blocked file, the validation hook will:
 1. Check if the path/command/pattern contains any sensitive file
 2. Block the operation and display an informative security message
 3. Return exit code 2 to prevent execution
@@ -159,6 +176,7 @@ npm install -g bats
 make test
 
 # Or run individual test suites
+bats tests/test-session-context.bats
 bats tests/test-bash-validate.bats
 bats tests/test-read-validate.bats
 bats tests/test-glob-validate.bats
@@ -167,7 +185,8 @@ bats tests/test-grep-validate.bats
 
 ### Test Coverage
 
-The test suite includes 104 tests organized by validation script:
+The test suite includes 105 tests organized by hook:
+- **test-session-context.bats (1 test)**: SessionStart hook execution verification
 - **test-bash-validate.bats (26 tests)**: Command validation with blocking/allowing scenarios
 - **test-read-validate.bats (28 tests)**: File path validation in command-line and JSON modes
 - **test-glob-validate.bats (26 tests)**: Pattern and path parameter validation
