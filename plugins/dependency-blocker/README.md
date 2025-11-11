@@ -28,9 +28,10 @@ The Dependency Blocker plugin automatically blocks Claude Code from reading or e
 - **Smart Path Matching**: Detects excluded directories as complete path components with wildcard support
 
 ### General Features
+- **Proactive Context Provision**: SessionStart hook informs Claude about limitations upfront
 - **Configurable**: Easy to customize excluded directory patterns
 - **Token Efficient**: Saves significant tokens by preventing unnecessary directory access
-- **Comprehensive Testing**: 80 BATS tests ensuring reliable validation
+- **Comprehensive Testing**: 56 BATS tests ensuring reliable validation
 
 ## Installation
 
@@ -138,7 +139,15 @@ CHECKED_COMMANDS=(
 
 ## How It Works
 
-The plugin uses four PreToolUse validation hooks that intercept operations before tool execution:
+The plugin uses a SessionStart hook for proactive context provision and four PreToolUse validation hooks that intercept operations before tool execution:
+
+### 0. SessionStart Hook
+Provides upfront context to Claude about the plugin's limitations:
+- Informs Claude about blocked directories at session start
+- Lists allowed package managers and build tools
+- Explains rationale for blocking (token savings)
+- Recommends using package manager commands instead of file access commands
+- Runs once per session, before any tools are executed
 
 ### 1. Bash Hook
 The bash validation hook uses intelligent command analysis:
@@ -281,6 +290,7 @@ npm install -g bats
 make test
 
 # Or run individual test suites
+bats tests/test-session-context.bats
 bats tests/test-bash-validate.bats
 bats tests/test-read-validate.bats
 bats tests/test-glob-validate.bats
@@ -289,11 +299,12 @@ bats tests/test-grep-validate.bats
 
 ### Test Coverage
 
-The test suite includes 80 tests organized by validation script:
-- **test-bash-validate.bats (21 tests)**: Command-line args, JSON input, edge cases
-- **test-read-validate.bats (27 tests)**: File path validation with command-line and JSON modes
-- **test-glob-validate.bats (17 tests)**: Pattern and path parameter validation
-- **test-grep-validate.bats (15 tests)**: Search path validation
+The test suite includes 56 tests organized by hook:
+- **test-session-context.bats (1 test)**: SessionStart hook execution verification
+- **test-bash-validate.bats (37 tests)**: Command-line args, JSON input, security edge cases
+- **test-read-validate.bats (7 tests)**: File path validation with command-line and JSON modes
+- **test-glob-validate.bats (6 tests)**: Pattern and path parameter validation
+- **test-grep-validate.bats (5 tests)**: Search path validation
 
 All validation scripts test all 8 excluded directories with both blocking and allowing scenarios.
 
