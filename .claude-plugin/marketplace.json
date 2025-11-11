@@ -24,6 +24,11 @@
       "name": "block-dotfiles",
       "source": "./plugins/block-dotfiles",
       "description": "Blocks access to sensitive dotfiles and configuration files that may contain credentials, API keys, and other secrets."
+    },
+    {
+      "name": "gemini-delegation",
+      "source": "./plugins/gemini-delegation",
+      "description": "Delegate research and web search tasks to Gemini AI via CLI subagent interface."
     }
   ]
 }
