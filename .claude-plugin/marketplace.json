@@ -7,7 +7,7 @@
   "metadata": {
     "description": "A marketplace for Claude Code agent configuration plugins",
     "version": "1.0.0",
-    "pluginRoot": "/plugins"
+    "pluginRoot": "./plugins"
   },
   "plugins": [
     {
