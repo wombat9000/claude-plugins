@@ -1,0 +1,35 @@
+{
+  "name": "skill-eval",
+  "version": "1.0.0",
+  "description": "Eval harness for Claude Code skills and plugins",
+  "type": "module",
+  "main": "bin/run-eval.ts",
+  "scripts": {
+    "start": "tsx bin/run-eval.ts",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"**/*.{ts,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,json,md}\""
+  },
+  "keywords": [
+    "eval",
+    "cli",
+    "claude",
+    "skills"
+  ],
+  "author": "wombat9000",
+  "license": "MIT",
+  "packageManager": "pnpm@10.21.0",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "eslint": "^9.39.1",
+    "prettier": "^3.7.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

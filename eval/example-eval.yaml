@@ -1,0 +1,35 @@
+plugin: example-plugin
+description: Example eval configuration for testing a Claude Code skill
+
+testCases:
+  - name: Create hello world script
+    input: Create a Node.js script that prints "Hello, World!"
+    checks:
+      - type: file-exists
+        path: hello.js
+      - type: contains-pattern
+        path: hello.js
+        pattern: console\.log.*Hello.*World
+      - type: llm-judge
+        prompt: Does the script correctly print "Hello, World!" when executed?
+        weight: 2
+
+  - name: Parse JSON configuration
+    input: Read config.json and print the "app_name" field
+    setup:
+      - type: create-file
+        path: config.json
+        content: |
+          {
+            "app_name": "MyApp",
+            "version": "1.0.0"
+          }
+    checks:
+      - type: file-exists
+        path: parser.js
+      - type: contains-pattern
+        path: parser.js
+        pattern: JSON\.parse
+      - type: llm-judge
+        prompt: Does the script correctly read and extract the app_name field from config.json?
+        weight: 3
