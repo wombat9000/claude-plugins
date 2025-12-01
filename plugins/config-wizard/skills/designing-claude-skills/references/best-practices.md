@@ -6,6 +6,41 @@ Learn how to write effective Skills that Claude can discover and use successfull
 
 Good Skills are concise, well-structured, and tested with real usage. This guide provides practical authoring decisions to help you write Skills that Claude can discover and use effectively.
 
+## Table of Contents
+
+- [Core principles](#core-principles)
+  - Concise is key
+  - Set appropriate degrees of freedom
+- [Skill structure](#skill-structure)
+  - Naming conventions
+  - Writing effective descriptions
+  - Progressive disclosure patterns
+- [Workflows and feedback loops](#workflows-and-feedback-loops)
+  - Use workflows for complex tasks
+  - Implement feedback loops
+- [Content guidelines](#content-guidelines)
+  - Avoid time-sensitive information
+  - Use consistent terminology
+- [Common patterns](#common-patterns)
+  - Template pattern
+  - Examples pattern
+  - Conditional workflow pattern
+- [Evaluation and iteration](#evaluation-and-iteration)
+  - Build evaluations first
+  - Develop Skills iteratively with Claude
+  - Observe how Claude navigates Skills
+- [Anti-patterns to avoid](#anti-patterns-to-avoid)
+- [Advanced: Skills with executable code](#advanced-skills-with-executable-code)
+  - Solve, don't punt
+  - Provide utility scripts
+  - Use visual analysis
+  - Create verifiable intermediate outputs
+  - Package dependencies
+  - Runtime environment
+  - MCP tool references
+- [Technical notes](#technical-notes)
+- [Checklist for effective Skills](#checklist-for-effective-skills)
+
 ## Core principles
 
 ### Concise is key
