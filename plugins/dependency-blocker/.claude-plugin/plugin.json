@@ -2,5 +2,5 @@
   "name": "dependency-blocker",
   "description": "Prevents Claude from accessing dependency directories to save tokens",
   "version": "1.0.0",
-  "hooks": "./hooks/hooks.json"
+  "hooks": "../hooks/hooks.json"
 }

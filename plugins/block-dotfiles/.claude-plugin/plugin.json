@@ -2,5 +2,5 @@
   "name": "block-dotfiles",
   "description": "Blocks access to sensitive dotfiles and configuration files containing credentials",
   "version": "1.0.0",
-  "hooks": "./hooks/hooks.json"
+  "hooks": "../hooks/hooks.json"
 }
