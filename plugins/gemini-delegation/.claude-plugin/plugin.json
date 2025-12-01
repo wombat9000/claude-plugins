@@ -2,6 +2,7 @@
   "name": "gemini-delegation",
   "description": "Delegate research and web search tasks to Gemini AI via CLI",
   "version": "1.0.0",
+  "agents": "./agents/",
   "hooks": {
     "SessionStart": [{
       "hooks": [{
