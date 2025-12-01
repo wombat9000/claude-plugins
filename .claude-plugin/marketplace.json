@@ -6,8 +6,7 @@
   },
   "metadata": {
     "description": "A marketplace for Claude Code agent configuration plugins",
-    "version": "1.0.0",
-    "pluginRoot": "./plugins"
+    "version": "1.0.0"
   },
   "plugins": [
     {
@@ -17,7 +16,7 @@
     },
     {
       "name": "config-wizard",
-      "source": "./config-wizard",
+      "source": "./plugins/config-wizard",
       "description": "Collection of claude configs to help with configuring and extending claude code."
     },
     {
