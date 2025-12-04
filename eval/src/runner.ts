@@ -8,6 +8,10 @@ import { invokeInSandbox } from './sandbox.js';
 export async function runEval(pluginName: string): Promise<void> {
   console.log(`Running eval for plugin: ${pluginName}\n`);
 
+  // Clean previous eval artifacts
+  const evalTempDir = path.join(process.cwd(), '.eval-temp');
+  await fs.rm(evalTempDir, { recursive: true, force: true });
+
   // Load eval.yaml config
   const configPath = path.join(
   process.cwd(),  // = /repo/eval
@@ -33,6 +37,7 @@ export async function runEval(pluginName: string): Promise<void> {
 
     // Setup test environment
     const workingDir = await setupTestEnvironment(testCase.name);
+    await setupPlugin(pluginName, workingDir);
     const context: TestContext = { workingDir };
 
     // Run setup steps if any
@@ -106,6 +111,14 @@ async function runSetupStep(step: SetupStep, workingDir: string): Promise<void> 
     // TODO: Execute command in workingDir
     console.log(`   Setup: ${step.command}`);
   }
+}
+
+async function setupPlugin(pluginName: string, workingDir: string): Promise<void> {
+  const pluginSourcePath = path.join(process.cwd(), '..', 'plugins', pluginName);
+  const pluginDestPath = path.join(workingDir, '.claude', 'plugins', pluginName);
+
+  await fs.mkdir(path.dirname(pluginDestPath), { recursive: true });
+  await fs.cp(pluginSourcePath, pluginDestPath, { recursive: true });
 }
 
 function printSummary(results: TestResult[]): void {

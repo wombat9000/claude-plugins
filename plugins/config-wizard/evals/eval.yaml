@@ -1,0 +1,11 @@
+plugin: config-wizard
+description: Tests the config-wizard plugin commands
+
+testCases:
+  - name: cmd-init creates project command
+    input: "/cmd-init --name hello"
+    setup: []
+    checks:
+      - type: file-exists
+        path: .claude/commands/hello.md
+        weight: 2

@@ -1,20 +1,28 @@
 ---
 description: Initialize a new slash command for Claude Code.
+args:
+  - name: name
+    description: Name of the command to create (without leading slash)
+    required: true
+  - name: location
+    description: Where to create the command (project, personal, or plugin)
+    required: false
+    default: project
+  - name: plugin
+    description: Plugin name (required if location=plugin)
+    required: false
 ---
 
 # Command Initialization
 
-First, ask the user where they want to create the command using the AskUserQuestion tool with a single choice question:
-- Question: "Where should this command be created?"
-- Header: "Location"
-- Options:
-  1. "Project" - Create in the current project's .claude/commands directory (only available to this project)
-  2. "Personal" - Create in your personal ~/.claude/commands directory (available across all projects)
-  3. "Plugin" - Create as a plugin in .claude-plugin/commands (for distribution and reuse)
+Parse the arguments:
+- `name` - The command name (e.g., "hello" creates "/hello")
+- `location` - Where to create: "project", "personal", or "plugin" (default: "project")
+- `plugin` - Plugin name (only needed if location="plugin")
 
-If the user selects "Plugin", make a second AskUserQuestion call asking:
-- Question: "Which plugin should contain this command?"
-- Header: "Plugin"
-- Options: List the available plugins found in the plugins/ directory or .claude-plugin/ directories
+Create the command file in the appropriate location:
+- **project**: `.claude/commands/{name}.md` in current project
+- **personal**: `~/.claude/commands/{name}.md` in user home
+- **plugin**: `.claude-plugin/commands/{name}.md` in specified plugin
 
-After receiving the user's answers, create the command in the appropriate location.
+The command file should contain a basic template with frontmatter (description) and a placeholder prompt.
