@@ -46,11 +46,16 @@ See **[references/ask-permissions.md](references/ask-permissions.md)** for recom
 
 Explicitly blocks tool use. Takes precedence over allow and ask rules.
 
-**When to use:** Protecting sensitive files, blocking dangerous commands, preventing network access.
+**⚠️ Important:** Deny rules are workflow controls, NOT security mechanisms. They have significant limitations (tool-specific, easily bypassed, prefix-only matching for Bash).
 
-**Examples:** Environment files, cloud credentials, dangerous commands, network access.
+**When to use:**
+- Resource management (blocking node_modules, build artifacts to save tokens)
+- Workflow guardrails (preventing accidental git push to main)
+- Focus management (avoiding deprecated/legacy code)
 
-See **[references/deny-permissions.md](references/deny-permissions.md)** for critical security patterns and baseline template.
+**NOT for security:** For protecting secrets and credentials, use hooks instead (PreToolUse hooks provide tool-agnostic protection).
+
+See **[references/deny-permissions.md](references/deny-permissions.md)** for complete limitations, proper use cases, and why hooks are the right security solution.
 
 ## Basic Syntax
 
@@ -60,13 +65,15 @@ All permission rules follow this format:
 ToolName(pattern)
 ```
 
-**Available Tools:** Bash, Read, Edit, Write, WebFetch, NotebookEdit
+**Available Tools:** Bash, Read, Edit, Write, Glob, Grep, WebFetch, WebSearch, NotebookEdit, Task, Skill, SlashCommand, TodoWrite, AskUserQuestion, BashOutput, KillShell, ExitPlanMode
+
+**Most common:** Bash, Read, Edit, Write, Glob, Grep, WebFetch
 
 **Pattern types:**
 - **Bash**: Prefix matching - `Bash(git status)` matches "git status", "git status file.txt"
 - **File tools**: Glob matching - `Read(src/**)` matches all files in src/ recursively
 
-**Important:** Bash patterns can be bypassed with command chaining. Always combine Bash restrictions with file-level deny patterns for security.
+**Important:** Bash patterns use prefix-only matching and can be bypassed with command chaining. See deny-permissions.md for complete limitations.
 
 See **[references/official-reference.md](references/official-reference.md)** for complete syntax reference and known limitations.
 
@@ -74,27 +81,32 @@ See **[references/official-reference.md](references/official-reference.md)** for
 
 When setting up permissions:
 
-1. **Start with deny rules** - Block sensitive files and dangerous commands (see deny-permissions.md for baseline template)
-2. **Add allow rules** - Enable routine safe operations
-3. **Add ask rules** - Require confirmation for important operations
-4. **Test configuration** - Verify typical workflows work correctly
-5. **Iterate** - Add rules as needed based on actual usage
+1. **For security: Use hooks** - Protect secrets with PreToolUse hooks (deny rules aren't sufficient for security)
+2. **Add deny rules** - Block large files (node_modules, build artifacts) to save tokens, prevent workflow mistakes
+3. **Add allow rules** - Enable routine safe operations
+4. **Add ask rules** - Require confirmation for important operations
+5. **Test configuration** - Verify typical workflows work correctly
+6. **Iterate** - Add rules as needed based on actual usage
 
 ## Getting Started
 
-Minimal secure configuration:
+**For security:** Use PreToolUse hooks to protect secrets and credentials (see Claude Code documentation on hooks).
+
+**Sample workflow configuration:**
 
 ```json
 {
   "permissions": {
     "deny": [
-      "Read(./.env)",
-      "Read(**/.env)",
-      "Read(~/.aws/**)",
-      "Read(~/.ssh/**)",
-      "Bash(rm:*)",
-      "Bash(sudo:*)",
-      "WebFetch"
+      // Resource management (save tokens)
+      "Read(node_modules/**)",
+      "Read(build/**)",
+      "Read(dist/**)",
+      "Read(*.min.js)",
+
+      // Workflow guardrails (prevent mistakes)
+      "Bash(git push origin main:*)",
+      "Bash(npm publish:*)"
     ],
     "allow": [
       "Bash(npm run test:*)",
@@ -111,11 +123,13 @@ Minimal secure configuration:
 }
 ```
 
+**Note:** Hooks handle security (secrets, credentials). Deny rules handle workflow controls.
+
 ## Reference Files
 
-For detailed guidance, patterns, and security best practices:
+For detailed guidance, patterns, and best practices:
 
-- **[references/deny-permissions.md](references/deny-permissions.md)** - Critical security patterns, baseline template, bypass prevention (START HERE for security)
+- **[references/deny-permissions.md](references/deny-permissions.md)** - Limitations, workflow use cases (resource management, guardrails), why hooks are better for security
 - **[references/allow-permissions.md](references/allow-permissions.md)** - Safe patterns, project templates, anti-patterns to avoid
 - **[references/ask-permissions.md](references/ask-permissions.md)** - When to require confirmation, common patterns
 - **[references/official-reference.md](references/official-reference.md)** - Complete technical reference, glob syntax, known limitations
