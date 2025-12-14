@@ -132,6 +132,7 @@ Concise guides with practical examples:
 - **[references/allow-permissions.md](references/allow-permissions.md)** - What to allow (non-destructive, reversible operations), practical examples, key principles
 - **[references/ask-permissions.md](references/ask-permissions.md)** - What to ask for (external changes, dependencies, critical configs), avoiding permission fatigue
 - **[references/deny-permissions.md](references/deny-permissions.md)** - Key limitations (tool-specific), proper use cases (resource management, workflow guardrails), why hooks are needed for security
+- **[references/layering-permissions.md](references/layering-permissions.md)** - Strategic permission layering (broad allow + narrow ask/deny), how precedence enables maintainable configurations, critical warning about build tools
 - **[references/git-permissions.md](references/git-permissions.md)** - Git-specific permission patterns, security implications of git commands
 - **[references/build-tool-permissions.md](references/build-tool-permissions.md)** - Recommended configuration patterns for build tools (npm, gradle, maven, make, cargo, etc.), core principles, decision framework
 - **[references/official-reference.md](references/official-reference.md)** - Complete technical reference, glob syntax, known limitations
