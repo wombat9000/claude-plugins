@@ -132,4 +132,5 @@ For detailed guidance, patterns, and best practices:
 - **[references/deny-permissions.md](references/deny-permissions.md)** - Limitations, workflow use cases (resource management, guardrails), why hooks are better for security
 - **[references/allow-permissions.md](references/allow-permissions.md)** - Safe patterns, project templates, anti-patterns to avoid
 - **[references/ask-permissions.md](references/ask-permissions.md)** - When to require confirmation, common patterns
+- **[references/build-tool-permissions.md](references/build-tool-permissions.md)** - Recommended configuration patterns for build tools (npm, gradle, maven, make, cargo, etc.), core principles, decision framework
 - **[references/official-reference.md](references/official-reference.md)** - Complete technical reference, glob syntax, known limitations
