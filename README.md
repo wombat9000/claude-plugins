@@ -4,7 +4,7 @@ A marketplace for Claude Code agent configuration plugins.
 
 ## Available Plugins
 
-1. **[config-wizard](#config-wizard)** - Interactive wizard to help create and review Claude Code slash commands
+1. **[config-wizard](#config-wizard)** - Comprehensive toolkit for creating slash commands, designing skills, and configuring permissions
 2. **[block-dotfiles](#block-dotfiles)** - Security plugin that blocks access to sensitive dotfiles and configuration files
 3. **[dependency-blocker](#dependency-blocker)** - Performance plugin that prevents access to dependency directories
 
@@ -36,17 +36,29 @@ This repository provides a plugin marketplace for Claude Code extensions. Users 
 
 ### config-wizard
 
-Interactive wizard to help create and review Claude Code slash commands.
-
-Provides slash commands to initialize new commands and review existing ones. Supports creating commands at project, personal, or plugin level.
+Comprehensive toolkit for creating slash commands, designing skills, and configuring Claude Code permissions with security best practices.
 
 **Version**: 1.0.0
 
-**Features:**
+**Slash Commands:**
 - `/config-wizard:cmd-init` - Initialize a new slash command for Claude Code
 - `/config-wizard:cmd-review` - Review an existing slash command from the current project
-- Interactive prompts to guide command creation
-- Support for project, personal, and plugin-level commands
+
+**Skills:**
+
+1. **designing-claude-skills** - Comprehensive guide for creating, reviewing, and improving skills
+   - Creating new skills from scratch
+   - Reviewing and auditing existing skills
+   - Understanding skill architecture and design patterns
+   - Troubleshooting skill loading and triggering
+   - Best practices for bundled resources (scripts, references, assets)
+
+2. **managing-permissions** - Guide for configuring Claude Code permissions in settings.json
+   - Configuring allow, ask, and deny rules
+   - Understanding permission precedence and hierarchy
+   - Strategic permission layering (broad allow + narrow ask/deny)
+   - Git-specific permission patterns
+   - Build tool security (npm, make, gradle, cargo, etc.)
 
 ### block-dotfiles
 
