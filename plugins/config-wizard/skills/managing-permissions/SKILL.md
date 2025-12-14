@@ -30,7 +30,7 @@ Grants explicit permission for tool use without confirmation.
 
 **Examples:** Reading source code, running tests, read-only git commands.
 
-See **[references/allow-permissions.md](references/allow-permissions.md)** for comprehensive safe patterns and project templates.
+See **[references/allow-permissions.md](references/allow-permissions.md)** for guidance and examples.
 
 ### Ask
 
@@ -40,7 +40,7 @@ Prompts for user confirmation before allowing tool use.
 
 **Examples:** Git push/commit, package installation, editing critical config files.
 
-See **[references/ask-permissions.md](references/ask-permissions.md)** for recommended patterns and balancing security with convenience.
+See **[references/ask-permissions.md](references/ask-permissions.md)** for examples and avoiding permission fatigue.
 
 ### Deny
 
@@ -55,7 +55,7 @@ Explicitly blocks tool use. Takes precedence over allow and ask rules.
 
 **NOT for security:** For protecting secrets and credentials, use hooks instead (PreToolUse hooks provide tool-agnostic protection).
 
-See **[references/deny-permissions.md](references/deny-permissions.md)** for complete limitations, proper use cases, and why hooks are the right security solution.
+See **[references/deny-permissions.md](references/deny-permissions.md)** for key limitations and proper use cases.
 
 ## Basic Syntax
 
@@ -127,11 +127,11 @@ When setting up permissions:
 
 ## Reference Files
 
-For detailed guidance, patterns, and best practices:
+Concise guides with practical examples:
 
-- **[references/deny-permissions.md](references/deny-permissions.md)** - Limitations, workflow use cases (resource management, guardrails), why hooks are better for security
-- **[references/allow-permissions.md](references/allow-permissions.md)** - Core principles for safe allow rules, decision framework, common patterns, anti-patterns
-- **[references/ask-permissions.md](references/ask-permissions.md)** - When to require confirmation, common patterns
+- **[references/allow-permissions.md](references/allow-permissions.md)** - What to allow (non-destructive, reversible operations), practical examples, key principles
+- **[references/ask-permissions.md](references/ask-permissions.md)** - What to ask for (external changes, dependencies, critical configs), avoiding permission fatigue
+- **[references/deny-permissions.md](references/deny-permissions.md)** - Key limitations (tool-specific), proper use cases (resource management, workflow guardrails), why hooks are needed for security
 - **[references/git-permissions.md](references/git-permissions.md)** - Git-specific permission patterns, security implications of git commands
 - **[references/build-tool-permissions.md](references/build-tool-permissions.md)** - Recommended configuration patterns for build tools (npm, gradle, maven, make, cargo, etc.), core principles, decision framework
 - **[references/official-reference.md](references/official-reference.md)** - Complete technical reference, glob syntax, known limitations
